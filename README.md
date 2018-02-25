@@ -1,1 +1,1 @@
-Hallo Hallo
+This repository contains numerous data science projects I have attempted. Some are from Kaggle's competition page while others are self-derived from datasets available on Kaggle.
