@@ -1,0 +1,255 @@
+play_id - ID of the play
+game_id - ID of the game
+home_team - The home team
+away_team - The away team
+posteam - The team with the ball
+posteam_type - Whether the team with the ball is the home or away team
+defteam - The team on defense
+side_of_field - Which side of the field the team is on
+yardline_100 - The yardline in 100-yards i.e. yards to go
+game_date - The date of the game
+quarter_seconds_remaining - Seconds left in the quarter (starts at 900)
+half_seconds_remaining - Seconds left in the half (starts at 1800)
+game_seconds_remaining - Seconds left in the game (starts at 3600)
+game_half - Which half
+quarter_end - If the quarter ended on this play
+drive - # drive
+sp - 
+qtr - # quarter
+down - Down #. NA if it's a kickoff
+goal_to_go
+time - Time on the clock
+yrdln - How NFL reports the yard line i.e. ATL 25
+ydstogo - Yards to go on the down
+ydsnet - Net yards gained on the drive
+desc - Description of the play
+play_type - run/pass/kickoff/no_play/field_goal
+yards_gained - Yards gained on the play
+shotgun - Whether it was a shotgun play
+no_huddle - Whether the team huddled before
+qb_dropback - 0/1 Did the QB dropback?
+qb_kneel - 0/1 Did the QB kneel?
+qb_spike - 0/1 Did the QB spike the ball?
+qb_scramble - 0/1 Did the QB scramble?
+pass_length - Was the pass short or deep?
+pass_location - Which direction did it go?
+air_yards - How many yards through the air did the pass travel?
+yards_after_catch - How many YAC did the receiver go?
+run_location - Which direction was the run?
+run_gap - Through which gab was the run?
+field_goal_result - FG good or not?
+kick_distance - 
+extra_point_result - 
+two_point_conv_result
+home_timeouts_remaining
+away_timeouts_remaining
+timeout - 0/1 Was there a timeout?
+timeout_team - Who took it?
+td_team - Who scored the touchdown?
+posteam_timeouts_remaining
+defteam_timeouts_remaining
+total_home_score
+total_away_score
+posteam_score
+defteam_score
+score_differential
+posteam_score_post
+defteam_score_post
+score_differential_post
+no_score_prob
+opp_fg_prob
+opp_safety_prob
+opp_td_prob
+fg_prob
+safety_prob
+td_prob
+extra_point_prob
+two_point_conversion_prob
+ep - EXPECTED POINTS
+epa - EXPECTED POINTS ADDED
+total_home_epa
+total_away_epa
+total_home_rush_epa
+total_away_rush_epa
+total_home_pass_epa
+total_away_pass_epa
+air_epa
+yac_epa
+comp_air_epa
+comp_yac_epa
+total_home_comp_air_epa
+total_away_comp_air_epa
+total_home_comp_yac_epa
+total_away_comp_yac_epa
+total_home_raw_air_epa
+total_away_raw_air_epa
+total_home_raw_yac_epa
+total_away_raw_yac_epa
+wp - WIN PROBABILITY
+def_wp
+home_wp
+away_wp
+wpa - WIN PROBABILITY ADDED
+home_wp_post
+away_wp_post
+total_home_rush_wpa
+total_away_rush_wpa
+total_home_pass_wpa
+total_away_pass_wpa
+air_wpa
+yac_wpa
+comp_air_wpa
+comp_yac_wpa
+total_home_comp_air_wpa
+total_away_comp_air_wpa
+total_home_comp_yac_wpa
+total_away_comp_yac_wpa
+total_home_raw_air_wpa
+total_away_raw_air_wpa
+total_home_raw_yac_wpa
+total_away_raw_yac_wpa
+punt_blocked - 0/1 Was the punt blocked?
+first_down_rush - 0/1 Did the run result in a 1st down?
+first_down_pass - 0/1 Did the pass result in a 1st down?
+first_down_penalty - 0/1 Did the penalty result in a 1st down?
+third_down_converted - 0/1 Third down converted?
+third_down_failed
+fourth_down_converted
+fourth_down_failed
+incomplete_pass
+interception
+punt_inside_twenty
+punt_in_endzone
+punt_out_of_bounds
+punt_downed
+punt_fair_catch
+kickoff_inside_twenty
+kickoff_in_endzone
+kickoff_out_of_bounds
+kickoff_downed
+kickoff_fair_catch
+fumble_forced
+fumble_not_forced
+fumble_out_of_bounds
+solo_tackle
+safety
+penalty
+tackled_for_loss
+fumble_lost
+own_kickoff_recovery
+own_kickoff_recovery_td
+qb_hit
+rush_attempt
+pass_attempt
+sack
+touchdown
+pass_touchdown
+rush_touchdown
+return_touchdown
+extra_point_attempt
+two_point_attempt
+field_goal_attempt
+kickoff_attempt
+punt_attempt
+fumble
+complete_pass
+assist_tackle
+lateral_reception
+lateral_rush
+lateral_return
+lateral_recovery
+passer_player_id
+passer_player_name
+receiver_player_id
+receiver_player_name
+rusher_player_id
+rusher_player_name
+lateral_receiver_player_id
+lateral_receiver_player_name
+lateral_rusher_player_id
+lateral_rusher_player_name
+lateral_sack_player_id
+lateral_sack_player_name
+interception_player_id
+interception_player_name
+lateral_interception_player_id
+lateral_interception_player_name
+punt_returner_player_id
+punt_returner_player_name
+lateral_punt_returner_player_id
+lateral_punt_returner_player_name
+kickoff_returner_player_name
+kickoff_returner_player_id
+lateral_kickoff_returner_player_id
+lateral_kickoff_returner_player_name
+punter_player_id
+punter_player_name
+kicker_player_name
+kicker_player_id
+own_kickoff_recovery_player_id
+own_kickoff_recovery_player_name
+blocked_player_id
+blocked_player_name
+tackle_for_loss_1_player_id
+tackle_for_loss_1_player_name
+tackle_for_loss_2_player_id
+tackle_for_loss_2_player_name
+qb_hit_1_player_id
+qb_hit_1_player_name
+qb_hit_2_player_id
+qb_hit_2_player_name
+forced_fumble_player_1_team
+forced_fumble_player_1_player_id
+forced_fumble_player_1_player_name
+forced_fumble_player_2_team
+forced_fumble_player_2_player_id
+forced_fumble_player_2_player_name
+solo_tackle_1_team
+solo_tackle_2_team
+solo_tackle_1_player_id
+solo_tackle_2_player_id
+solo_tackle_1_player_name
+solo_tackle_2_player_name
+assist_tackle_1_player_id
+assist_tackle_1_player_name
+assist_tackle_1_team
+assist_tackle_2_player_id
+assist_tackle_2_player_name
+assist_tackle_2_team
+assist_tackle_3_player_id
+assist_tackle_3_player_name
+assist_tackle_3_team
+assist_tackle_4_player_id
+assist_tackle_4_player_name
+assist_tackle_4_team
+pass_defense_1_player_id
+pass_defense_1_player_name
+pass_defense_2_player_id
+pass_defense_2_player_name
+fumbled_1_team
+fumbled_1_player_id
+fumbled_1_player_name
+fumbled_2_player_id
+fumbled_2_player_name
+fumbled_2_team
+fumble_recovery_1_team
+fumble_recovery_1_yards
+fumble_recovery_1_player_id
+fumble_recovery_1_player_name
+fumble_recovery_2_team
+fumble_recovery_2_yards
+fumble_recovery_2_player_id
+fumble_recovery_2_player_name
+return_team
+return_yards
+penalty_team
+penalty_player_id
+penalty_player_name
+penalty_yards
+replay_or_challenge
+replay_or_challenge_result
+penalty_type
+defensive_two_point_attempt
+defensive_two_point_conv
+defensive_extra_point_attempt
+defensive_extra_point_conv
