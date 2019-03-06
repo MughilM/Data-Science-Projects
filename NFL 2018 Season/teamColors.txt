@@ -67,7 +67,7 @@
         'primary': '#0080C6',
         'secondary': '#FFC20E'
     },
-    'STL': {
+    'LAR': {
         'primary': '#002244',
         'secondary': '#866D4B'
     },
