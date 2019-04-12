@@ -6,6 +6,6 @@ layout: home
 title: Data Science Projects
 ---
 
-[NFL](/projectPages/EDA.md)
+[NFL](/projectPages/NFL/desc.md) 
 
 
