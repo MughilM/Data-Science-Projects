@@ -1,43 +1,41 @@
-# Welcome to Jekyll!
-#
-# This config file is meant for settings that affect your whole blog, values
-# which you are expected to set up once and rarely edit after that. If you find
-# yourself editing this file very often, consider using Jekyll's data files
-# feature for the data you need to update frequently.
-#
-# For technical reasons, this file is *NOT* reloaded automatically when you use
-# 'bundle exec jekyll serve'. If you change this file, please restart the server process.
+title: "Mughil's Data Science Projects"
+author: "Mughil Pari"
+description: "All of my current data science projects are written about here."
+lang: "en"
+baseurl: "/Data-Science-Projects"
+url: ""
 
-# Site settings
-# These are used to personalize your new site. If you look in the HTML files,
-# you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
-# You can create any custom variable you would like, and they will be accessible
-# in the templates via {{ site.myvariable }}.
-title: Mughil's Data Science Projects
-email: mughilan.muthupari@gmail.com
-description: >- # this means to ignore newlines until "baseurl:"
-  Write an awesome description for your new site here. You can edit this
-  line in _config.yml. It will appear in your document head meta (for
-  Google search results) and in your feed.xml site description.
-baseurl: "/Data-Science-Projects" # the subpath of your site, e.g. /blog
-url: "" # the base hostname & protocol for your site, e.g. http://example.com
-twitter_username: jekyllrb
-github_username:  jekyll
+# Page settings
+permalink: /:title/          # see https://jekyllrb.com/docs/permalinks/
+date_format: "%B %d, %Y"     # see http://shopify.github.io/liquid/filters/date/
+hide_title: false            # remove site heading in the header
+post_footer: true            # show previous and next links at the end of each post
 
-# Build settings
-markdown: kramdown
-theme: minima
-plugins:
-  - jekyll-feed
+# Theme settings
+dark_theme: false            # use the dark mode as default
+dark_header: true            # keep the header dark
+# style: minimal             # use a simpler style inspired by the minima theme
 
-# Exclude from processing.
-# The following items will not be processed, by default. Create a custom list
-# to override the default setting.
-# exclude:
-#   - Gemfile
-#   - Gemfile.lock
-#   - node_modules
-#   - vendor/bundle/
-#   - vendor/cache/
-#   - vendor/gems/
-#   - vendor/ruby/
+navigation:                  # (optional) site navigation in the header
+  - index.html
+  - README.md
+#  - title: "https://"       # linking external sites is also supported
+
+icons:                       # (optional) icons in the header, see http://fontawesome.com/icons
+  envelope: "mailto:mughilan.muthupari@gmail.com"
+  github: ""
+  rss: "/contrast/feed.xml"
+
+# Pagination
+show_excerpts: false         # preview articles on the home page
+paginate: 8                  # number of articles per page
+excerpt_separator: "\n\n\n"  # indicate the end of the excerpt by two blank lines
+
+comments:                    # embed disqus or isso comments
+#  disqus: ""
+#  isso: ""
+
+plugins: 
+ - jekyll-feed
+ - jekyll-paginate
+ - jekyll-default-layout
