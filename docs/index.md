@@ -6,6 +6,8 @@ layout: home
 title: Data Science Projects
 ---
 
-[NFL](/projectPages/NFL/desc.md) 
+[NFL](/projectPages/NFL/desc.md)
+
+[House Prices](/projectPages/HousePrices/desc.md) 
 
 
