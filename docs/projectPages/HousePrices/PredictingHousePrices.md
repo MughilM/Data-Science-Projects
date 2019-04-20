@@ -1,10 +1,10 @@
 ---
 layout: page
 title: Prediction of the Sale Price of Homes
+mathjax: true
 ---
 
 
-# Prediction of the Sale Price of Homes
 This notebook will attempt to predict the sale price of homes based on a number of different features. This comes from the "Knowledge" section of Kaggle, so it is not a direct competition, but instead is a nice entry level project.
 
 
@@ -69,11 +69,14 @@ The description of each of these columns are given a [text file](http://localhos
 For a "proof of concept", I will be recreating Kaggle's benchmark submission that predicts sale price based on a multiple linear regression of the year and month sold, the square footage and the number of bedrooms. This corresponds to columns **YrSold, MoSold, LotArea,** and **BedroomAbvGr**. The last variable is the number of bedrooms not including the basement. However, there is no variable representing the number of bedrooms in the basement. Thus, this is the closest variable we have.
 
 ### Side Note: Root Mean Square Logarithmic Error
-As a side note, Kaggle usually uses the root mean square logarithmic error (RMSLE) as the accuracy metric. As opposed to root mean square error (RMSE), RMSLE does not penalize large differences when both the predicted and actual values are the same. Thus, it takes into account more so the percent difference than the actual difference. This works perfectly with house prices as they tend to be large. The formula is below. $\hat{y}_i​$ is the predicted value while $y_i​$ is the actual.
+As a side note, Kaggle usually uses the root mean square logarithmic error (RMSLE) as the accuracy metric. As opposed to root mean square error (RMSE), RMSLE does not penalize large differences when both the predicted and actual values are the same. Thus, it takes into account more so the percent difference than the actual difference. This works perfectly with house prices as they tend to be large. The formula is below.
+
 $$
 RMSLE = \sqrt{\frac{1}{n}\sum_{i=1}^n \left(\ln\left(\hat{y}_i+1\right) - \ln\left(y_i+1\right)\right)^2} =
 \sqrt{\frac{1}{n}\sum_{i=1}^n \left(\ln\frac{\hat{y}_i+1}{y_i+1}\right)^2}
 $$
+
+where $$\hat{y}_i$$ is the predicted value and $$y_i$$ is the actual value.
 
 ## Multiple Linear Regression
 

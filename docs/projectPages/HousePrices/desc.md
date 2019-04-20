@@ -10,7 +10,7 @@ The housing market is extremely fickle. Prices on a single house can fluctuate w
 
 ## About the Data Used
 
-The data is taken from a Kaggle "Knowledge" entry. This means that there is no direct competition, nor are there monetary prizes involved. However, there is still a leaderboard for the most accurate models. Users can submit files or work on local kernels. The emphasis in this type of entry is learning from other Kagglers through discussion boards and the like. 
+The house data describes houses in Ames, Iowa, and whose paper is listed [here](http://jse.amstat.org/v19n3/decock.pdf). The data is taken from a Kaggle "Knowledge" competition at [this link](https://www.kaggle.com/c/house-prices-advanced-regression-techniques/overview). This means that there is no direct competition, nor are there monetary prizes involved. However, there is still a leaderboard for the most accurate models. Users can submit files or work on local kernels. The emphasis in this type of entry is learning from other Kagglers through discussion boards and the like. See [this link](https://www.kaggle.com/c/house-prices-advanced-regression-techniques/data) to see data and variable descriptions.
 
 ## Notebooks in this Project
 

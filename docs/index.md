@@ -10,4 +10,4 @@ title: Data Science Projects
 
 [House Prices](/projectPages/HousePrices/desc.md) 
 
-
+[Indian Premier League](/projectPages/IPL/desc.md) 

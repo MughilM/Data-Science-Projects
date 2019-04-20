@@ -1,6 +1,6 @@
 ---
 layout: page
-permalink: /description/
+permalink: NFL/description/
 title: The NFL
 ---
 
