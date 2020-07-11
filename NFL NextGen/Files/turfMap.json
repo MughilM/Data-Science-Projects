@@ -1,0 +1,18 @@
+{
+    "A-Turf Titan 50": ["New Era Field"],
+    "Bermuda grass": ["State Farm Stadium", "M&T Bank Stadium", "Bank of America Stadium",
+                      "TIAA Bank Field", "Arrowhead Stadium", "Raymond James Stadium",
+                      "Nissan Stadium", "FedExField", "Levi\"s Stadium",
+                      "Los Angeles Memorial Coliseum", "Dignity Health Sports Park",
+                      "Oakland-Alameda County Coliseum"],
+    "Desso GrassMaster": ["Lambaeu Field", "Lincoln Financial Field", "Twickenham Stadium",
+                         "Wembley Stadium"],
+    "FieldTurf": ["Ford Field", "Gillette Stadium", "Mercedes-Benz Stadium",
+                  "Mercedes-Benz Superdome", "CenturyLink Field", "Tottenham Hotspur Stadium"],
+    "Hellas Matrix Turf": ["AT&T Stadium", "NRG Stadium"],
+    "Kentucky bluegrass": ["Soldier Field", "FirstEnergy Stadium", "Empower Field at Mile High",
+                           "Heinz Field", "Estadio Azteca"],
+    "Platinum TE Paspalum": ["Hard Rock Stadium"],
+    "Shaw Sports Momentum Pro": ["Lucas Oil Stadium"],
+    "UBU Speed Series S5-M Synthetic Turf": ["Paul Brown Stadium", "U.S. Bank Stadium", "MetLife Stadium"]
+}
