@@ -19,7 +19,9 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.models import Model
 
 import numpy as np
-import matplotlib.pyplot as plt
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
+from itertools import product
 
 class GAN:
     def __init__(self, real_data, input_shape: tuple, noise_length=100):
@@ -76,7 +78,8 @@ class GAN:
             print(f'Epoch: {epoch}')
             for batch_num in range(amount_batches):
                 # Index the array to get the current batch.
-                real_batch_data = self.real_data[batch_size * batch_num: batch_size * (batch_num + 1)]
+                real_batch_data = np.expand_dims(self.real_data[batch_size * batch_num: batch_size * (batch_num + 1)],
+                                                 axis=-1)
                 # Pass random noise through the generator data, and label these
                 fake_gen_data = self.generator.predict(np.random.normal(0, 1, size=(batch_size, self.noise_length)))
                 # Join the two together
@@ -96,40 +99,34 @@ class GAN:
 
                 print(f'D Loss: {disc_loss[0]}, D Acc: {disc_loss[1] * 100}, '
                       f'G Loss: {gen_loss[0]}, G Acc: {gen_loss[1] * 100}')
+            if epoch % save_frequency == 0:
+                self.save_gen_output((5, 5), filename=f'epoch_{epoch}.png')
 
-    def save_gen_output(self, samples, plot_shape: tuple, filename=''):
+    def save_gen_output(self, plot_shape: tuple, filename=''):
         """
         Pass random noise samples through the generator
         and outputs to a file.
-        :param samples:
-        :param plot_shape:
+        :param plot_shape: A 2-tuple showing number of images.
         :param filename:
         :return:
         """
-        if plot_shape[0] * plot_shape[1] != samples:
-            raise ValueError("Plot shape doesn't match number of samples.")
-        r, c = plot_shape
-        noise = np.random.normal(0, 1, (r * c, self.noise_length))
+        rows, columns = plot_shape
+        # Pass proper number of samples through generator
+        noise = np.random.normal(0, 1, (rows * columns, self.noise_length))
         gen_input = self.generator.predict(noise)
-
-        # Rescale images 0 - 1
+        # Convert -1 to 1 range to 0 to 1 range
         gen_input = 0.5 * gen_input + 0.5
 
-        fig, axes = plt.subplots(r, c)
-        count = 0
-        for i in range(r):
-            for j in range(c):
-                axes[i, j].imshow(gen_input[count, :, :, 0], cmap='gray')
-                axes[i, j].axis('off')
-                count += 1
-        if filename == '':
-            filename = 'gen_output.png'
-        if filename[-4:] != '.png':
-            filename += '.png'
-        fig.savefig(filename)
-        plt.close()
+        fig = make_subplots(rows=rows, cols=columns)
 
+        for i, (r, c) in enumerate(product(list(range(1, rows * columns + 1)))):
+            fig.add_trace(
+                go.Heatmap(z=np.flip(gen_input[1], axis=0), colorscale='gray'),
+                row=r, col=c
+            )
 
+        fig.update_layout(height=800, width=800, title_text="Numbers", coloraxis_showscale=False)
+        fig.update_xaxes(showticklabels=False)
+        fig.update_yaxes(showticklabels=False)
 
-
-
+        fig.write_image(filename)
