@@ -24,6 +24,7 @@ import numpy as np
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 from itertools import product
+from tqdm import tqdm
 
 class GAN:
     def __init__(self, real_data, input_shape: tuple, noise_length=100):
@@ -75,10 +76,15 @@ class GAN:
         :param save_frequency: How often to save the combined model
         :return:
         """
+        disc_loss = 0
+        disc_acc = 0
+        gen_loss = 0
         amount_batches = self.real_data.shape[0] // batch_size + 1
-        for epoch in range(1, epochs + 1):
-            print(f'Epoch: {epoch}')
-            for batch_num in range(amount_batches):
+        for epoch in tqdm(range(1, epochs + 1), desc=f'All Epochs ({epochs})', unit='epoch', leave=False, colour='red'):
+            batch_tqdm = tqdm(range(amount_batches), desc=f'Epoch {epoch}', unit=' batch', leave=False, colour='green',
+                              postfix={'D_loss': f'{disc_loss:.2f}', 'D_acc': f'{disc_loss * 100:.2f}%',
+                                       'G_loss': f'{gen_loss:.2f}'})
+            for batch_num in batch_tqdm:
                 # Index the array to get the current batch.
                 real_batch_data = np.expand_dims(self.real_data[batch_size * batch_num: batch_size * (batch_num + 1)],
                                                  axis=-1)
@@ -89,7 +95,7 @@ class GAN:
                 discriminator_input = np.vstack((real_batch_data, fake_gen_data))
                 discriminator_labels = np.concatenate((np.ones(real_batch_data.shape[0]), np.zeros(fake_gen_data.shape[0])))[:, np.newaxis]
                 # Train on batch with the combined data
-                disc_loss = self.discriminator.train_on_batch(discriminator_input, discriminator_labels)
+                disc_loss, disc_acc = self.discriminator.train_on_batch(discriminator_input, discriminator_labels)
 
                 # Now to train the generator, use the combined model so the
                 # discriminator weights are frozen.
@@ -99,7 +105,9 @@ class GAN:
 
                 gen_loss = self.combined_model.train_on_batch(gen_input, gen_output)
 
-                print(disc_loss, gen_loss)
+                # Update the progress bar with the stats
+                batch_tqdm.set_postfix(ordered_dict={'D_loss': f'{disc_loss:.2f}', 'D_acc': f'{disc_loss * 100:.2f}%',
+                                       'G_loss': f'{gen_loss:.2f}'})
             if epoch % save_frequency == 0:
                 self.save_gen_output((5, 5), filename=f'epoch_{epoch}.png')
 
