@@ -13,6 +13,8 @@ and this process repeats.
 Source for general structure of class:
 https://wiki.pathmind.com/generative-adversarial-network-gan
 """
+import sys
+
 import tensorflow as tf
 from tensorflow.keras.layers import *
 from tensorflow.keras.optimizers import Adam
@@ -81,24 +83,23 @@ class GAN:
                 real_batch_data = np.expand_dims(self.real_data[batch_size * batch_num: batch_size * (batch_num + 1)],
                                                  axis=-1)
                 # Pass random noise through the generator data, and label these
-                fake_gen_data = self.generator.predict(np.random.normal(0, 1, size=(batch_size, self.noise_length)))
+                fake_gen_data = self.generator.predict(np.random.normal(0, 1, size=(len(real_batch_data), self.noise_length)))
                 # Join the two together
                 # Also build the real and fake labels
                 discriminator_input = np.vstack((real_batch_data, fake_gen_data))
-                discriminator_labels = np.concatenate((np.ones(batch_size), np.zeros(batch_size)))[:, np.newaxis]
+                discriminator_labels = np.concatenate((np.ones(real_batch_data.shape[0]), np.zeros(fake_gen_data.shape[0])))[:, np.newaxis]
                 # Train on batch with the combined data
                 disc_loss = self.discriminator.train_on_batch(discriminator_input, discriminator_labels)
 
                 # Now to train the generator, use the combined model so the
                 # discriminator weights are frozen.
                 # Make some noise, BUT LABEL THESE AS TRUE!
-                gen_input = np.random.normal(0, 1, size=(batch_size, self.noise_length))
-                gen_output = np.ones((batch_size, 1))
+                gen_input = np.random.normal(0, 1, size=(batch_size * 2, self.noise_length))
+                gen_output = np.ones((batch_size * 2, 1))
 
-                gen_loss = self.generator.train_on_batch(gen_input, gen_output)
+                gen_loss = self.combined_model.train_on_batch(gen_input, gen_output)
 
-                print(f'D Loss: {disc_loss[0]}, D Acc: {disc_loss[1] * 100}, '
-                      f'G Loss: {gen_loss[0]}, G Acc: {gen_loss[1] * 100}')
+                print(disc_loss, gen_loss)
             if epoch % save_frequency == 0:
                 self.save_gen_output((5, 5), filename=f'epoch_{epoch}.png')
 
@@ -113,15 +114,16 @@ class GAN:
         rows, columns = plot_shape
         # Pass proper number of samples through generator
         noise = np.random.normal(0, 1, (rows * columns, self.noise_length))
-        gen_input = self.generator.predict(noise)
+        # We don't want the final dimension of size 1 (reflects a single channel)
+        gen_output = np.squeeze(self.generator.predict(noise))
         # Convert -1 to 1 range to 0 to 1 range
-        gen_input = 0.5 * gen_input + 0.5
+        gen_output = 0.5 * gen_output + 0.5
 
         fig = make_subplots(rows=rows, cols=columns)
 
-        for i, (r, c) in enumerate(product(list(range(1, rows * columns + 1)))):
+        for i, (r, c) in enumerate(product(range(1, rows + 1), range(1, columns + 1))):
             fig.add_trace(
-                go.Heatmap(z=np.flip(gen_input[1], axis=0), colorscale='gray'),
+                go.Heatmap(z=np.flip(gen_output[i], axis=0), colorscale='gray'),
                 row=r, col=c
             )
 

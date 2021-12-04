@@ -35,7 +35,9 @@ class MNIST_GAN(GAN):
         model.add(BatchNormalization(momentum=0.8))
         model.add(Dense(512))
         model.add(LeakyReLU(alpha=0.2))
+        model.add(BatchNormalization(momentum=0.8))
         model.add(Dense(1024))
+        model.add(LeakyReLU(alpha=0.2))
         model.add(BatchNormalization(momentum=0.8))
         model.add(Dense(np.prod(self.input_shape), activation='tanh'))
         model.add(Reshape(self.input_shape))
@@ -52,8 +54,10 @@ class MNIST_GAN(GAN):
 
         model.add(Flatten(input_shape=self.input_shape))
         model.add(Dense(512))
+        model.add(Dropout(0.3))
         model.add(LeakyReLU(alpha=0.2))
         model.add(Dense(256))
+        model.add(Dropout(0.3))
         model.add(LeakyReLU(alpha=0.2))
         model.add(Dense(1, activation='sigmoid'))
 
@@ -67,10 +71,28 @@ class MNIST_GAN(GAN):
 if __name__ == '__main__':
     (XTrain, YTrain), (XTest, YTest) = mnist.load_data()
 
+    XTrain = (XTrain - 127.5) / 127.5
+
     # Let's start simple. Only extract all the FIVES
     fives = XTrain[np.where(YTrain == 5)]
     print(f'Number of "5" samples: {fives.shape[0]}')
 
+    fig = make_subplots(rows=5, cols=5)
+
+    for i, (r, c) in enumerate(product(range(1, 6), range(1, 6))):
+        fig.add_trace(
+            go.Heatmap(z=np.flip(fives[i], axis=0), colorscale='gray'),
+            row=r, col=c
+        )
+
+    fig.update_layout(height=800, width=800, title_text="Numbers", coloraxis_showscale=False)
+    fig.update_xaxes(showticklabels=False)
+    fig.update_yaxes(showticklabels=False)
+
+    fig.write_image('original.png')
+
     gan = MNIST_GAN(real_data=fives, input_shape=(28, 28, 1))
 
-    gan.train(epochs=100, batch_size=256, save_frequency=10)
+    gan.save_gen_output((5, 5), 'initial_plots.png')
+
+    gan.train(epochs=60, batch_size=256, save_frequency=10)
