@@ -2,5 +2,6 @@
 **/*.csv
 Indian\ Premier\ League/ipl
 **/.idea/
+**/Data/
 
 mlruns
