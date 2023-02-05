@@ -1,0 +1,15 @@
+version: 1
+formatters:
+  simple:
+    format: '%(asctime)s - %(name)s(%(funcName)s) - %(levelname)s || %(message)s'
+handlers:
+  console:
+    class: utils.color_logging.ColorHandler
+    formatter: simple
+    stream: ext://sys.stdout
+    level: DEBUG
+root:
+  handlers: [console]
+  level: DEBUG
+
+disable_existing_loggers: false

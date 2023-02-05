@@ -1,0 +1,11 @@
+_target_: src.models.cancer_image_module.CancerImageClassifier
+
+optimizer:
+  _target_: torch.optim.Adam
+  _partial_: True
+  lr: 0.001
+  weight_decay: 0.0
+
+net:
+  _target_: src.models.nets.simple_conv_net.SimpleConvNet
+  output_size: 1

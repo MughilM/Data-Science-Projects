@@ -1,0 +1,11 @@
+defaults:
+  - _self_
+  - datamodule: cancer
+  - model: cancer_conv2d
+  - trainer: default.yaml
+  - hydra: default.yaml
+  - paths: default.yaml
+
+task_name: train
+
+seed: 1729
