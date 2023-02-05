@@ -5,7 +5,7 @@ Indian\ Premier\ League/ipl
 **/Data/
 **/docs/
 
-archive
-logs
+archive/
+logs/
 
 mlruns
