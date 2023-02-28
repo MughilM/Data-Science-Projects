@@ -1,8 +1,8 @@
 _target_: src.datamodules.cancer_module.CancerDataModule
 comp_name: histopathologic-cancer-detection
 data_dir: ${paths.data_dir}
-downsample_n: 20000
+downsample_n: 10000
 validation_split: 0.2
 batch_size: 1024
-num_workers: 2
+num_workers: 8
 pin_memory: True

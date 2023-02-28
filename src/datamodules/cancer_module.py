@@ -94,12 +94,13 @@ class CancerDataModule(pl.LightningDataModule):
         """
         if not self.train_dataset and not self.vali_dataset and not self.test_dataset:
             # Read the training labels from the standalone csv
-            train_labels = pd.read_csv(os.path.join(self.COMP_DATA_PATH, 'train_labels.csv'))
+            labels = pd.read_csv(os.path.join(self.COMP_DATA_PATH, 'train_labels.csv'))
             # Downsample however many we need
-            downsampled_dataset = train_labels.sample(n=self.hparams.downsample_n)
+            # If downsample_n = -1, then we take the entire dataset.
+            if self.hparams.downsample_n != -1:
+                labels = labels.sample(n=self.hparams.downsample_n)
             # Split training and validation
-            train_files, validation_files = train_test_split(downsampled_dataset,
-                                                             test_size=self.hparams.validation_split)
+            train_files, validation_files = train_test_split(labels, test_size=self.hparams.validation_split)
             print(f'Number of images in training: {len(train_files)}')
             print(f'Number of images in validation: {len(validation_files)}')
             # Now load the Dataset objects

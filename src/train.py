@@ -26,7 +26,6 @@ def train(cfg: DictConfig) -> Tuple[dict, dict]:
         pl.seed_everything(cfg.seed, workers=True)
 
     # Next, instantiate all the needed parts.
-    # TODO: Add logging...
     logger.info(f'Instantiating datamodule <{cfg.datamodule._target_}>...')
     datamodule: LightningDataModule = hydra.utils.instantiate(cfg.datamodule)
 
@@ -42,7 +41,6 @@ def train(cfg: DictConfig) -> Tuple[dict, dict]:
     if cfg.get('task_name') == 'train':
         with mlflow.start_run(run_name=datetime.datetime.today().strftime('%Y%M%D-%H:%M:%S')) as run:
             logger.info('Logging parameters to MLFlow...')
-            mlflow.log_params(cfg)
 
             logger.info('Starting training...')
             trainer.fit(model=model, datamodule=datamodule, ckpt_path=cfg.get('ckpt_path'))
