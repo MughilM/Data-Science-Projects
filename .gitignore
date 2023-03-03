@@ -1,6 +1,5 @@
 !.gitignore
 **/*.csv
-Indian\ Premier\ League/ipl
 **/.idea/
 **/Data/
 **/docs/
@@ -10,3 +9,4 @@ logs/
 data/
 
 mlruns
+/data
