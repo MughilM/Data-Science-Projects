@@ -83,7 +83,7 @@ class CancerDataModule(pl.LightningDataModule):
             with zipfile.ZipFile(os.path.join(self.hparams.data_dir, f'{self.hparams.comp_name}.zip'), 'r') as zip_ref:
                 zip_ref.extractall(self.COMP_DATA_PATH)
             print('Deleting zip file...')
-            os.remove(f'{self.hparams.comp_name}.zip')
+            os.remove(os.path.join(self.hparams.data_dir, f'{self.hparams.comp_name}.zip'))
 
     def setup(self, stage: Optional[str] = None) -> None:
         """

@@ -13,11 +13,13 @@ import datetime
 import hydra
 from omegaconf import DictConfig, OmegaConf
 
+import torch
 import pytorch_lightning as pl
 from pytorch_lightning import LightningModule, LightningDataModule, Trainer
 
 import mlflow
 
+torch.set_float32_matmul_precision('medium')
 
 def train(cfg: DictConfig) -> Tuple[dict, dict]:
     logger.debug(f'Full hydra configuration:\n{OmegaConf.to_yaml(cfg)}')
@@ -41,6 +43,13 @@ def train(cfg: DictConfig) -> Tuple[dict, dict]:
     if cfg.get('task_name') == 'train':
         with mlflow.start_run(run_name=datetime.datetime.today().strftime('%Y%M%D-%H:%M:%S')) as run:
             logger.info('Logging parameters to MLFlow...')
+            # Log parameters of sub dictionaries, ignoring certain keys
+            dm_ignored = ['_target_', 'comp_name', 'data_dir']
+            mlflow.log_params({k: v for k, v in cfg['datamodule'].items() if k not in dm_ignored})
+            mlflow.log_param('lr', cfg['model']['optimizer']['lr'])
+            mlflow.log_param('weight_decay', cfg['model']['optimizer']['weight_decay'])
+            mlflow.log_params(cfg['model']['net'])
+            mlflow.log_param('epochs', cfg['trainer']['max_epochs'])
 
             logger.info('Starting training...')
             trainer.fit(model=model, datamodule=datamodule, ckpt_path=cfg.get('ckpt_path'))

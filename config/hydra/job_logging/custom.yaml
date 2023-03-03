@@ -7,9 +7,9 @@ handlers:
     class: utils.color_logging.ColorHandler
     formatter: simple
     stream: ext://sys.stdout
-    level: DEBUG
+    level: INFO
 root:
   handlers: [console]
-  level: DEBUG
+  level: INFO
 
 disable_existing_loggers: false
