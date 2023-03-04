@@ -6,8 +6,5 @@
 
 archive/
 logs/
-data/
 
 mlruns
-/data
-!data/*.dvc
