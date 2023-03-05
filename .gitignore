@@ -6,5 +6,5 @@
 
 archive/
 logs/
-
+data/
 mlruns

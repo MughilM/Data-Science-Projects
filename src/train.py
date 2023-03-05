@@ -1,3 +1,5 @@
+import os
+
 import pyrootutils
 
 root = pyrootutils.setup_root(
@@ -26,6 +28,8 @@ def train(cfg: DictConfig) -> Tuple[dict, dict]:
     # Set seed for everything (numpy, random number generator, etc.)
     if cfg.get('seed'):
         pl.seed_everything(cfg.seed, workers=True)
+    # Create the data directory in case it's completely missing
+    os.makedirs(cfg.paths.data_dir, exist_ok=True)
 
     # Next, instantiate all the needed parts.
     logger.info(f'Instantiating datamodule <{cfg.datamodule._target_}>...')
