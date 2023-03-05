@@ -1,5 +1,6 @@
 defaults:
   - _self_
+  - callbacks: early_stopping
   - datamodule: cancer
   - model: cancer_conv2d
   - trainer: default.yaml
