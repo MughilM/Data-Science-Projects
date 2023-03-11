@@ -16,7 +16,7 @@ class ResNet(nn.Module):
         super().__init__()
 
         self.resnet = resnet50(pretrained=True)
-        # We need to freeze all the layers so they
+        # We need to freeze all the layers, so they
         # don't get trained and waste time
         self.resnet.eval()
         for param in self.resnet.parameters():

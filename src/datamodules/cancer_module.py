@@ -48,19 +48,20 @@ class CancerDataset(Dataset):
 class CancerDataModule(pl.LightningDataModule):
     def __init__(self, comp_name: str = 'histopathologic-cancer-detection', data_dir: str = 'data/',
                  downsample_n: int = 10000, validation_split: float = 0.2,
-                 batch_size: int = 2048, num_workers: int = 1, pin_memory: bool = True):
+                 batch_size: int = 2048, num_workers: int = 1, pin_memory: bool = True,
+                 image_size: int = 32):
         super().__init__()
         # Saving the hyperparameters allows all the parameters to be accessible with self.hparams
         self.save_hyperparameters()
         self.COMP_DATA_PATH = os.path.join(self.hparams.data_dir, self.hparams.comp_name)
         # Transforms
         self.train_transform = T.Compose([
-            T.CenterCrop(32),
+            T.CenterCrop(self.hparams.image_size),
             T.RandomHorizontalFlip(),
             T.RandomVerticalFlip(),
             T.ToTensor()
         ])
-        self.vali_test_transform = T.Compose([T.CenterCrop(32), T.ToTensor()])
+        self.vali_test_transform = T.Compose([T.CenterCrop(self.hparams.image_size), T.ToTensor()])
 
         self.train_dataset: Optional[Dataset] = None
         self.vali_dataset: Optional[Dataset] = None
@@ -68,7 +69,7 @@ class CancerDataModule(pl.LightningDataModule):
 
     @property
     def num_classes(self):
-        return 2
+        return 1
 
     def prepare_data(self) -> None:
         """
