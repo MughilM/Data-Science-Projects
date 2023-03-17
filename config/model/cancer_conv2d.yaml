@@ -8,4 +8,5 @@ optimizer:
 
 net:
   _target_: src.models.nets.simple_conv_net.SimpleConvNet
+  name: simple_conv
   output_size: 1

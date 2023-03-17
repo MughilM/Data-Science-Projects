@@ -11,7 +11,7 @@ from torchvision.models import vit_b_16
 
 
 class ViT(nn.Module):
-    def __init__(self, output_size: int = 1, pretrained: bool = True):
+    def __init__(self, name: str = 'vit_b_165', output_size: int = 1, pretrained: bool = True):
         super().__init__()
 
         if pretrained:

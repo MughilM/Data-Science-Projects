@@ -8,5 +8,6 @@ optimizer:
 
 net:
   _target_: src.models.nets.vit.ViT
+  name: vit_b_16
   output_size: 1
   pretrained: True

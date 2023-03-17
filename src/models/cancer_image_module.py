@@ -13,12 +13,14 @@ import pytorch_lightning as pl
 from torchmetrics import MeanMetric, MaxMetric
 from torchmetrics.classification import BinaryAccuracy
 
+import wandb
+
 
 class CancerImageClassifier(pl.LightningModule):
     def __init__(self, net: nn.Module, optimizer: optim.Optimizer):
         super().__init__()
         # Save all the hyperparameters, they'll become available as self.hparams
-        self.save_hyperparameters(logger=False, ignore=['net'])
+        self.save_hyperparameters(logger=True, ignore=['net'])
 
         self.net = net
         self.optimizer = optimizer
@@ -51,8 +53,8 @@ class CancerImageClassifier(pl.LightningModule):
         train_accuracy = self.binary_accuracy(outputs.squeeze(), targets)
         loss = self.loss(outputs, targets.unsqueeze(dim=-1).float())
         self.train_loss(loss)  # Update our current loss, will hold average loss so far...
-        self.log('train/loss', self.train_loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
-        self.log('train/acc', train_accuracy, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        self.log('train/loss', self.train_loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        self.log('train/acc', train_accuracy, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return {'loss': loss, 'acc': train_accuracy}
 
     def validation_step(self, batch, batch_idx):
@@ -61,8 +63,8 @@ class CancerImageClassifier(pl.LightningModule):
         val_accuracy = self.binary_accuracy(outputs.squeeze(), targets)
         loss = self.loss(outputs, targets.unsqueeze(dim=-1).float())
         self.val_loss(loss)  # Update our current validation loss
-        self.log('val/loss', self.val_loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
-        self.log('val/acc', val_accuracy, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        self.log('val/loss', self.val_loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        self.log('val/acc', val_accuracy, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return {'loss': loss, 'acc': val_accuracy}
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:

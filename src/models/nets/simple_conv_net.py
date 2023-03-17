@@ -9,7 +9,7 @@ from torch import nn
 
 
 class SimpleConvNet(nn.Module):
-    def __init__(self, output_size: int = 1):
+    def __init__(self, name: str = 'simple_conv', output_size: int = 1):
         super().__init__()
 
         self.model_1 = nn.Sequential(

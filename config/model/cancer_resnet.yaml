@@ -8,4 +8,5 @@ optimizer:
 
 net:
   _target_: src.models.nets.resnet.ResNet
+  name: resnet50
   output_size: 1

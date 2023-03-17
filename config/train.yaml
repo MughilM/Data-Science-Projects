@@ -2,6 +2,7 @@ defaults:
   - _self_
   - callbacks: early_stopping
   - datamodule: cancer
+  - logger: wandb
   - model: cancer_conv2d
   - trainer: default.yaml
   - hydra: default.yaml

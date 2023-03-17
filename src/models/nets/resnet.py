@@ -12,7 +12,7 @@ from torchvision.models import resnet50
 
 
 class ResNet(nn.Module):
-    def __init__(self, output_size: int = 1):
+    def __init__(self, name: str = 'resnet50', output_size: int = 1):
         super().__init__()
 
         self.resnet = resnet50(pretrained=True)
