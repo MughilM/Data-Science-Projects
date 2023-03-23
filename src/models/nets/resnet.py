@@ -8,14 +8,14 @@ levels.
 """
 import torch
 from torch import nn
-from torchvision.models import resnet50
+from torchvision.models import resnet50, ResNet50_Weights
 
 
 class ResNet(nn.Module):
     def __init__(self, name: str = 'resnet50', output_size: int = 1):
         super().__init__()
 
-        self.resnet = resnet50(pretrained=True)
+        self.resnet = resnet50(weights=ResNet50_Weights.IMAGENET1K_V1)
         # We need to freeze all the layers, so they
         # don't get trained and waste time
         self.resnet.eval()

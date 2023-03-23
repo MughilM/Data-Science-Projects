@@ -13,14 +13,12 @@ import pytorch_lightning as pl
 from torchmetrics import MeanMetric, MaxMetric
 from torchmetrics.classification import BinaryAccuracy
 
-import wandb
-
 
 class CancerImageClassifier(pl.LightningModule):
     def __init__(self, net: nn.Module, optimizer: optim.Optimizer):
         super().__init__()
         # Save all the hyperparameters, they'll become available as self.hparams
-        self.save_hyperparameters(logger=True, ignore=['net'])
+        self.save_hyperparameters(logger=False, ignore=['net'])
 
         self.net = net
         self.optimizer = optimizer

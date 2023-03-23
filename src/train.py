@@ -1,5 +1,3 @@
-import os
-
 import pyrootutils
 
 root = pyrootutils.setup_root(
@@ -10,7 +8,8 @@ root = pyrootutils.setup_root(
 
 from typing import Tuple, Optional
 import logging
-import datetime as dt
+import os
+from pathlib import Path
 
 import hydra
 from omegaconf import DictConfig, OmegaConf
@@ -34,8 +33,11 @@ def train(cfg: DictConfig) -> Tuple[dict, dict]:
     os.makedirs(cfg.paths.data_dir, exist_ok=True)
 
     # Next, instantiate all the needed parts.
-    wandb.init(project=cfg.datamodule.comp_name,
-               name=f'{dt.datetime.now().strftime("%Y%m%d_%H%M%S")}|{cfg.model.net.name}')
+    # Continue a run if we have provided a checkpoint ID
+    if cfg.get('checkpoint_reference') is not None:
+        run = wandb.init(project=cfg.datamodule.comp_name, resume=True)
+    else:
+        run = wandb.init(project=cfg.datamodule.comp_name)
     log.info(f'Instantiating datamodule <{cfg.datamodule._target_}>...')
     datamodule: LightningDataModule = hydra.utils.instantiate(cfg.datamodule)
 
@@ -60,6 +62,15 @@ def train(cfg: DictConfig) -> Tuple[dict, dict]:
             'weight_decay': cfg['model']['optimizer']['weight_decay'],
             'epochs': cfg['trainer']['max_epochs']
         })
+        # Check to see if we are to continue training. If we do, then using the
+        # checkpoint reference ID, download the artifacts, and load the checkpoint itself.
+        # Then we can start training for however many epochs. The keys need to be present
+        # in the YAML files.
+        if cfg.get('checkpoint_reference') is not None:
+            artifact = run.use_artifact(cfg.get('checkpoint_reference'), type='model')
+            artifact_dir = artifact.download()
+            # Load the checkpoint
+            model.load_from_checkpoint(Path(artifact_dir) / 'model.ckpt')
         trainer.fit(model=model, datamodule=datamodule, ckpt_path=cfg.get('ckpt_path'))
     wandb.finish()
 

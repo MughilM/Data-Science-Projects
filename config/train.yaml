@@ -10,4 +10,6 @@ defaults:
 
 task_name: train
 
+checkpoint_reference: null
+
 seed: 1729
