@@ -9,7 +9,6 @@ root = pyrootutils.setup_root(
 from typing import Tuple, Optional
 import logging
 import os
-from pathlib import Path
 
 import hydra
 from omegaconf import DictConfig, OmegaConf
@@ -17,11 +16,7 @@ from omegaconf import DictConfig, OmegaConf
 import torch
 import pytorch_lightning as pl
 from pytorch_lightning import LightningModule, LightningDataModule, Trainer
-from pytorch_lightning.loggers.wandb import WandbLogger
 
-import wandb
-
-os.environ['WANDB_SILENT'] = 'true'
 torch.set_float32_matmul_precision('medium')
 
 def train(cfg: DictConfig) -> Tuple[dict, dict]:
@@ -32,47 +27,20 @@ def train(cfg: DictConfig) -> Tuple[dict, dict]:
     # Create the data directory in case it's completely missing
     os.makedirs(cfg.paths.data_dir, exist_ok=True)
 
-    # Next, instantiate all the needed parts.
-    # Continue a run if we have provided a checkpoint ID
-    if cfg.get('checkpoint_reference') is not None:
-        run = wandb.init(project=cfg.datamodule.comp_name, resume=True)
-    else:
-        run = wandb.init(project=cfg.datamodule.comp_name)
     log.info(f'Instantiating datamodule <{cfg.datamodule._target_}>...')
     datamodule: LightningDataModule = hydra.utils.instantiate(cfg.datamodule)
 
     log.info(f'Instantiating model <{cfg.model._target_}>...')
     model: LightningModule = hydra.utils.instantiate(cfg.model)
 
-    log.info(f'Instatiating logger <{cfg.logger._target_}>...')
-    wandb_logger: WandbLogger = hydra.utils.instantiate(cfg.logger)
 
     log.info(f'Instantiating Trainer...')
-    trainer: Trainer = hydra.utils.instantiate(cfg.trainer, logger=wandb_logger)
+    trainer: Trainer = hydra.utils.instantiate(cfg.trainer)
     log.debug(f'Trainer logger:{trainer.logger}')
 
     if cfg.get('task_name') == 'train':
         log.info('Starting training...')
-        dm_ignored = ['_target_', 'comp_name', 'data_dir']
-        # Log training metrics to Weights and Biases
-        wandb_logger.experiment.config.update({k: v for k, v in cfg['datamodule'].items() if k not in dm_ignored})
-        wandb_logger.experiment.config.update(cfg['model']['net'])
-        wandb_logger.experiment.config.update({
-            'lr': cfg['model']['optimizer']['lr'],
-            'weight_decay': cfg['model']['optimizer']['weight_decay'],
-            'epochs': cfg['trainer']['max_epochs']
-        })
-        # Check to see if we are to continue training. If we do, then using the
-        # checkpoint reference ID, download the artifacts, and load the checkpoint itself.
-        # Then we can start training for however many epochs. The keys need to be present
-        # in the YAML files.
-        if cfg.get('checkpoint_reference') is not None:
-            artifact = run.use_artifact(cfg.get('checkpoint_reference'), type='model')
-            artifact_dir = artifact.download()
-            # Load the checkpoint
-            model.load_from_checkpoint(Path(artifact_dir) / 'model.ckpt')
         trainer.fit(model=model, datamodule=datamodule, ckpt_path=cfg.get('ckpt_path'))
-    wandb.finish()
 
 
 @hydra.main(version_base='1.3', config_path='../config', config_name='train.yaml')
