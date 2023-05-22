@@ -1,0 +1,20 @@
+IMAGE_DATA_PATH: ./Data/tgs_salt/train/images
+TRAIN_CSV_PATH: ./Data/tgs_salt/train.csv
+
+test: 0.15
+gpu: true
+channels: 1
+classes: 1
+lr: 0.001
+batch_size: 32
+epochs: 40
+
+model_path: model.pth
+plot_path: plot.png
+
+unet_levels: 3
+
+INPUT_IMAGE_WIDTH: 128
+INPUT_IMAGE_HEIGHT: 128
+
+

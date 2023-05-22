@@ -1,0 +1,6 @@
+_target_: pytorch_lightning.loggers.wandb.WandbLogger
+save_dir: ${paths.output_dir}
+offline: False
+id: null
+project: ${datamodule.comp_name}
+log_model: all
