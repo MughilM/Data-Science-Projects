@@ -52,31 +52,6 @@ def train(cfg: DictConfig) -> Tuple[dict, dict]:
     trainer: Trainer = hydra.utils.instantiate(cfg.trainer, logger=wandb_logger, callbacks=[seg_image_callback])
     log.debug(f'Trainer logger:{trainer.logger}')
 
-    image = np.random.randint(low=0, high=256, size=(100, 100, 3), dtype=np.uint8)
-    predicted_mask = np.empty((100, 100), dtype=np.uint8)
-    ground_truth_mask = np.empty((100, 100), dtype=np.uint8)
-
-    predicted_mask[:50, :50] = 0
-    predicted_mask[50:, :50] = 1
-    predicted_mask[:50, 50:] = 2
-    predicted_mask[50:, 50:] = 3
-
-    ground_truth_mask[:25, :25] = 0
-    ground_truth_mask[25:, :25] = 1
-    ground_truth_mask[:25, 25:] = 2
-    ground_truth_mask[25:, 25:] = 3
-
-    class_labels = {0: "person", 1: "tree", 2: "car", 3: "road"}
-
-    masked_image = wandb.Image(
-        image,
-        masks={
-            "predictions": {"mask_data": predicted_mask, "class_labels": class_labels},
-            "ground_truth": {"mask_data": ground_truth_mask, "class_labels": class_labels},
-        },
-    )
-    wandb.log({"img_with_masks": masked_image})
-
     if cfg.get('task_name') == 'train':
         log.info('Starting training...')
         trainer.fit(model=model, datamodule=datamodule, ckpt_path=cfg.get('ckpt_path'))
