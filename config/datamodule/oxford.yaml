@@ -1,0 +1,10 @@
+_target_: src.datamodules.oxford_module.OxfordDataModule
+
+data_dir: ${paths.data_dir}
+comp_name: oxford
+image_size: 128
+batch_size: 128
+downsample_n: 1000
+validation_split: 0.2
+num_workers: 4
+pin_memory: True

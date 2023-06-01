@@ -1,0 +1,9 @@
+_target_: src.models.oxford_seg_module.SegmentationClassifierModule
+
+optimizer:
+  _target_: torch.optim.Adam
+  _partial_: True
+  lr: 0.001
+  weight_decay: 0.0
+
+output_classes: 3
