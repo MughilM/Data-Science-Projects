@@ -59,8 +59,8 @@ class SegmentationClassifierModule(pl.LightningModule):
         self.val_acc(accuracy)
         self.val_loss(loss)
         # Log
-        self.log('val/loss', self.val_loss, on_step=True, on_epoch=True, prog_bar=True)
-        self.log('val/acc', self.val_acc, on_step=True, on_epoch=True, prog_bar=True)
+        self.log('val/loss', self.val_loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log('val/acc', self.val_acc, on_step=False, on_epoch=True, prog_bar=True)
         return {'loss': loss, 'acc': accuracy}
 
     def test_step(self, batch, batch_idx):
@@ -73,8 +73,8 @@ class SegmentationClassifierModule(pl.LightningModule):
         self.test_acc(accuracy)
         self.test_loss(loss)
         # Log
-        self.log('val/loss', self.test_loss, on_step=True, on_epoch=True, prog_bar=True)
-        self.log('val/acc', self.test_acc, on_step=True, on_epoch=True, prog_bar=True)
+        self.log('val/loss', self.test_loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log('val/acc', self.test_acc, on_step=False, on_epoch=True, prog_bar=True)
         return {'loss': loss, 'acc': accuracy}
 
     def predict_step(self, batch, batch_idx, dataloader_idx):
