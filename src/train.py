@@ -35,7 +35,7 @@ def train(cfg: DictConfig) -> Tuple[dict, dict]:
     # Create the data directory in case it's completely missing
     os.makedirs(cfg.paths.data_dir, exist_ok=True)
 
-    wandb_logger = WandbLogger(project=cfg.datamodule.comp_name)
+    wandb_logger = WandbLogger(project=cfg.datamodule.comp_name, mode='disabled')
 
     log.info(f'Instantiating datamodule <{cfg.datamodule._target_}>...')
     datamodule: LightningDataModule = hydra.utils.instantiate(cfg.datamodule)

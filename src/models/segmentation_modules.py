@@ -3,22 +3,27 @@ import torch.nn as nn
 import torch.optim as optim
 
 from torchmetrics import MeanMetric
-from torchmetrics.classification import MulticlassAccuracy
+from torchmetrics.classification import MulticlassAccuracy, BinaryAccuracy
 
 import pytorch_lightning as pl
 
-from src.models.nets.unet import UNet
+from src.models.nets.unet import UMobileNet
 
 
-class SegmentationClassifierModule(pl.LightningModule):
-    def __init__(self, output_classes: int, optimizer: optim.Optimizer):
+class OxfordSegmentationClassifierModule(pl.LightningModule):
+    def __init__(self, image_size: int, in_image_channels: int,
+                 output_classes: int, optimizer: optim.Optimizer):
         super().__init__()
         self.output_classes = output_classes
-        self.model = UNet(output_classes)
+        self.model = UMobileNet(image_size, in_image_channels, output_classes)
         self.optimizer = optimizer
 
-        self.loss = nn.CrossEntropyLoss()
-        self.accuracy = MulticlassAccuracy(output_classes)
+        if output_classes == 1:
+            self.loss = nn.BCEWithLogitsLoss()
+            self.accuracy = BinaryAccuracy()
+        else:
+            self.loss = nn.CrossEntropyLoss()
+            self.accuracy = MulticlassAccuracy(output_classes)
 
         self.train_loss = MeanMetric()
         self.val_loss = MeanMetric()

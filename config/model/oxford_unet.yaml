@@ -1,4 +1,4 @@
-_target_: src.models.oxford_seg_module.SegmentationClassifierModule
+_target_: src.models.segmentation_modules.OxfordSegmentationClassifierModule
 
 optimizer:
   _target_: torch.optim.Adam
@@ -6,4 +6,6 @@ optimizer:
   lr: 0.001
   weight_decay: 0.0
 
+image_size: 128
+in_image_channels: 3
 output_classes: 3

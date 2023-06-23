@@ -1,0 +1,9 @@
+_target_: src.datamodules.tgs_salt_module.TGSSaltDataModule
+
+data_dir: ${paths.data_dir}
+comp_name: tgs-salt-identification-challenge
+downsample_n: 1000
+validation_split: 0.1
+batch_size: 64
+num_workers: 1
+pin_memory: True
