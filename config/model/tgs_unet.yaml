@@ -1,4 +1,4 @@
-_target_: src.models.oxford_seg_module.SegmentationClassifierModule
+_target_: src.models.segmentation_modules.TGSSaltClassifierModule
 
 optimizer:
   _target_: torch.optim.Adam
@@ -8,4 +8,3 @@ optimizer:
 
 image_size: 101
 in_image_channels: 1
-output_classes: 1

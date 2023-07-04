@@ -6,7 +6,7 @@ root = pyrootutils.setup_root(
     pythonpath=True,
 )
 
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 import logging
 import os
 
@@ -18,9 +18,11 @@ import torch
 import pytorch_lightning as pl
 from pytorch_lightning import LightningModule, LightningDataModule, Trainer
 from pytorch_lightning.loggers.wandb import WandbLogger
+from pytorch_lightning.callbacks import Callback
 from torchinfo import summary
 
 from custom_callbacks import SegmentationImageCallback
+from utils.instantiators import instantiate_callbacks
 
 import wandb
 
@@ -35,7 +37,7 @@ def train(cfg: DictConfig) -> Tuple[dict, dict]:
     # Create the data directory in case it's completely missing
     os.makedirs(cfg.paths.data_dir, exist_ok=True)
 
-    wandb_logger = WandbLogger(project=cfg.datamodule.comp_name, mode='disabled')
+    wandb_logger = WandbLogger(project=cfg.datamodule.comp_name)
 
     log.info(f'Instantiating datamodule <{cfg.datamodule._target_}>...')
     datamodule: LightningDataModule = hydra.utils.instantiate(cfg.datamodule)
@@ -45,11 +47,13 @@ def train(cfg: DictConfig) -> Tuple[dict, dict]:
     log.info(f'Instantiating model <{cfg.model._target_}>...')
     model: LightningModule = hydra.utils.instantiate(cfg.model)
 
-    seg_image_callback = SegmentationImageCallback(datamodule, num_samples=3)
+    # seg_image_callback = SegmentationImageCallback(datamodule, num_classes=1)
+    log.info('Instantiating callbacks')
+    callbacks: List[Callback] = instantiate_callbacks(cfg.get('callbacks'))
 
 
     log.info(f'Instantiating Trainer...')
-    trainer: Trainer = hydra.utils.instantiate(cfg.trainer, logger=wandb_logger, callbacks=[seg_image_callback])
+    trainer: Trainer = hydra.utils.instantiate(cfg.trainer, logger=wandb_logger, callbacks=callbacks)
     log.debug(f'Trainer logger:{trainer.logger}')
 
     if cfg.get('task_name') == 'train':

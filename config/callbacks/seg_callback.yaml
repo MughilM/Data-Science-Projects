@@ -1,0 +1,7 @@
+seg_callback_tgs:
+  _target_: src.custom_callbacks.SegmentationImageCallback
+  num_samples: 10
+  num_classes: 2
+  class_labels:
+    0: sediment
+    1: salt

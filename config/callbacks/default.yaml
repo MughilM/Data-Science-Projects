@@ -1,0 +1,4 @@
+defaults:
+  - early_stopping.yaml
+  - seg_callback.yaml
+  - _self_

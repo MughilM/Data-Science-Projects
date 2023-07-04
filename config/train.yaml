@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - callbacks: early_stopping
+  - callbacks: default.yaml
   - datamodule: oxford
   - logger: wandb
   - model: oxford_unet

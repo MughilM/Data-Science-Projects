@@ -1,0 +1,9 @@
+seg_callback_oxford:
+  _target_: src.custom_callbacks.SegmentationImageCallback
+  dm: ${datamodule}
+  num_samples: 10
+  num_classes: 3
+  class_labels:
+    0: object
+    1: blank
+    2: edge

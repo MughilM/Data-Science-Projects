@@ -50,6 +50,8 @@ class TGSSaltDataset(Dataset):
         # Convert to tensors, and convert mask to integer
         image = TF.to_tensor(image)
         mask = TF.convert_image_dtype(TF.to_tensor(mask), dtype=torch.uint8)
+        # Make the mask have values 0 or 1
+        mask[mask == 255] = 1
         return image, mask
 
     def __len__(self):
