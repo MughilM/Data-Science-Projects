@@ -1,0 +1,7 @@
+contrail_callback:
+  _target_: src.custom_callbacks.ContrailCallback
+  image_dir: ${paths.data_dir}/${datamodule.comp_name}/validation
+  sample_list: ["657695054953474414", "2973845925333417014", "9066295609351495014",
+                "4617259572479165215", "3198727862857750717", "3332315998066173412",
+                "7371282624918740214", "7508164004296764218", "6558861185867890815", "82272245413161715"]
+  wandb_enabled: ${wandb_enabled}

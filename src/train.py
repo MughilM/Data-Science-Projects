@@ -1,3 +1,5 @@
+import sys
+
 import pyrootutils
 
 root = pyrootutils.setup_root(
@@ -37,12 +39,19 @@ def train(cfg: DictConfig) -> Tuple[dict, dict]:
     # Create the data directory in case it's completely missing
     os.makedirs(cfg.paths.data_dir, exist_ok=True)
 
-    wandb_logger = WandbLogger(project=cfg.datamodule.comp_name)
+    if cfg.get('wandb_enabled'):
+        wandb_logger = WandbLogger(project=cfg.datamodule.comp_name)
+    else:
+        wandb_logger = WandbLogger(project=cfg.datamodule.comp_name, mode='disabled')
 
     log.info(f'Instantiating datamodule <{cfg.datamodule._target_}>...')
     datamodule: LightningDataModule = hydra.utils.instantiate(cfg.datamodule)
     datamodule.prepare_data()
     datamodule.setup('fit')
+
+    image, mask = next(iter(datamodule.train_dataloader()))
+    print('Image shape and dtype:', image.shape, image.dtype)
+    print('Label mask shape and dtype:', mask.shape, mask.dtype)
 
     log.info(f'Instantiating model <{cfg.model._target_}>...')
     model: LightningModule = hydra.utils.instantiate(cfg.model)
@@ -59,6 +68,13 @@ def train(cfg: DictConfig) -> Tuple[dict, dict]:
     if cfg.get('task_name') == 'train':
         log.info('Starting training...')
         trainer.fit(model=model, datamodule=datamodule, ckpt_path=cfg.get('ckpt_path'))
+        log.info('Testing model...')
+        output: torch.Tensor = trainer.predict(model=model, datamodule=datamodule)
+        output = torch.squeeze(torch.vstack(output))
+        # Round everything to 1 or 0
+        output = torch.round(output).to(torch.int8).detach().numpy()
+        print(output)
+
 
 
 @hydra.main(version_base='1.3', config_path='../config', config_name='train.yaml')

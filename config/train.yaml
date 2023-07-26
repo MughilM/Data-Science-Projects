@@ -1,9 +1,9 @@
 defaults:
   - _self_
   - callbacks: default.yaml
-  - datamodule: oxford
+  - datamodule: gr_contrails
   - logger: wandb
-  - model: oxford_unet
+  - model: gr_contrails_unet
   - trainer: default.yaml
   - hydra: default.yaml
   - paths: default.yaml
@@ -13,3 +13,5 @@ task_name: train
 checkpoint_reference: null
 
 seed: 1729
+
+wandb_enabled: false

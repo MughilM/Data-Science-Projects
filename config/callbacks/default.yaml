@@ -1,4 +1,4 @@
 defaults:
   - early_stopping.yaml
-  - seg_callback.yaml
+  - contrail_callback.yaml
   - _self_

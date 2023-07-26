@@ -3,5 +3,6 @@ seg_callback_tgs:
   num_samples: 10
   num_classes: 2
   class_labels:
-    0: sediment
-    1: salt
+    0: sky
+    1: contrail
+  wandb_enabled: ${wandb_enabled}

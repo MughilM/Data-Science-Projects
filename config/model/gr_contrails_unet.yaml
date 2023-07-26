@@ -1,0 +1,10 @@
+_target_: src.models.segmentation_modules.GRContrailsClassifierModule
+
+optimizer:
+  _target_: torch.optim.Adam
+  _partial_: True
+  lr: 0.001
+  weight_decay: 0.0
+
+image_size: 256
+in_image_channels: 3
