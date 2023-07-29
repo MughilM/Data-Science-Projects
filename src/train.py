@@ -40,9 +40,9 @@ def train(cfg: DictConfig) -> Tuple[dict, dict]:
     os.makedirs(cfg.paths.data_dir, exist_ok=True)
 
     if cfg.get('wandb_enabled'):
-        wandb_logger = WandbLogger(project=cfg.datamodule.comp_name)
+        wandb_logger = WandbLogger(project=cfg.datamodule.comp_name, save_dir=cfg.paths.log_dir)
     else:
-        wandb_logger = WandbLogger(project=cfg.datamodule.comp_name, mode='disabled')
+        wandb_logger = WandbLogger(project=cfg.datamodule.comp_name, save_dir=cfg.paths.log_dir, mode='disabled')
 
     log.info(f'Instantiating datamodule <{cfg.datamodule._target_}>...')
     datamodule: LightningDataModule = hydra.utils.instantiate(cfg.datamodule)
