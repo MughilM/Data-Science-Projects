@@ -1,0 +1,18 @@
+_target_: src.models.gr_contrails_modules.GRContrailBinaryClassifier
+
+binary_model:
+  _target_: src.models.nets.resnet.ResNet
+  name: resnet50
+  output_size: 1
+
+seg_model:
+  _target_: src.models.nets.unet.UMobileNet
+  image_size: 256
+  in_image_channels: 3
+  output_classes: 1
+
+lr: 0.005
+beta1: 0.5
+beta2: 0.999
+
+binary_image_size: 224

@@ -77,18 +77,18 @@ class GRContrailsFalseColorDataset(Dataset):
         blue = ((band_11 - 243) / (303 - 243)).clip(0, 1)
         # Concatenate them to create a false color image.
         # Do CHANNELS FIRST ordering (axis=0), the default for PyTorch.
-        image = np.stack((red, green, blue), axis=0)
+        image = torch.from_numpy(np.stack((red, green, blue), axis=0))
         # Read in the mask, unless this is a test directory
         if not self.test:
             mask = np.load(os.path.join(self.image_dir, dir_id, 'human_pixel_masks.npy'))
             if self.binary:
-                return torch.from_numpy(image), np.all(mask)
+                return image, int(np.any(mask))
             else:
                 # Mask is 256 x 256 x 1, do a transpose so both input image and mask are the same shape.
                 # Also convert to float, since it will be compared with binary cross entropy.
-                return torch.from_numpy(image), torch.from_numpy(np.transpose(mask, (2, 0, 1))).to(float)
+                return image, torch.from_numpy(np.transpose(mask, (2, 0, 1))).to(float)
         else:
-            return torch.from_numpy(image)
+            return image
 
 
 # TODO: Allow for different kinds of backend Dataset objects (false color, using all bands, etc.)
@@ -229,24 +229,27 @@ class GRContrailBinaryDataModule(GRContrailDataModule):
         :return:
         """
         # Check only one, because we set everything at once here...
-        if not self.train_cr_ds:
-            val_pos_contrail_ids = self._get_contrail_ids(os.path.join(self.COMP_DATA_PATH, 'validation'))
+        if not self.train_cr_ds and not self.train_bin_ds:
+            train_datapath = os.path.join(self.COMP_DATA_PATH, 'train')
+            val_datapath = os.path.join(self.COMP_DATA_PATH, 'validation')
+            val_pos_contrail_ids = self._get_contrail_ids(val_datapath)
             # Next, create two datasets, one for the binary, and one for the positive contrail masks.
             # Check for the use_val_as_train flag
             if self.hparams.use_val_as_train:
-                self.train_bin_ds = GRContrailsFalseColorDataset('validation', binary=True)
-                self.train_cr_ds = GRContrailsFalseColorDataset('validation',  directory_ids=val_pos_contrail_ids)
+                self.train_bin_ds = GRContrailsFalseColorDataset(val_datapath, binary=True)
+                self.train_cr_ds = GRContrailsFalseColorDataset(val_datapath,  directory_ids=val_pos_contrail_ids)
             else:
-                train_pos_contrail_ids = self._get_contrail_ids(os.path.join(self.COMP_DATA_PATH, 'train'))
-                self.train_bin_ds = GRContrailsFalseColorDataset('train', binary=True)
-                self.train_cr_ds = GRContrailsFalseColorDataset('train', directory_ids=train_pos_contrail_ids)
+                train_pos_contrail_ids = self._get_contrail_ids(train_datapath)
+                self.train_bin_ds = GRContrailsFalseColorDataset(train_datapath, binary=True)
+                self.train_cr_ds = GRContrailsFalseColorDataset(train_datapath, directory_ids=train_pos_contrail_ids)
             # Set up validation and test datasets
-            self.vali_bin_ds = GRContrailsFalseColorDataset('validation', binary=True)
-            self.vali_cr_ds = GRContrailsFalseColorDataset('validation', directory_ids=val_pos_contrail_ids)
+            self.vali_bin_ds = GRContrailsFalseColorDataset(val_datapath, binary=True)
+            self.vali_cr_ds = GRContrailsFalseColorDataset(val_datapath, directory_ids=val_pos_contrail_ids)
             # For the TEST dataset, we actually just want the raw images, since we don't know which ones are
             # binary or not. This also holds through the pipeline as well, as we would test the binary clasisfication
             # before the segmentation classification.
-            self.test_dataset = GRContrailsFalseColorDataset('test', test=True)
+            test_datapath = os.path.join(self.COMP_DATA_PATH, 'test')
+            self.test_dataset = GRContrailsFalseColorDataset(test_datapath, test=True)
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
         # We create two separate DataLoaders, one for the binary, and one for the contrail-only,

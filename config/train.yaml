@@ -1,9 +1,9 @@
 defaults:
   - _self_
   - callbacks: default.yaml
-  - datamodule: gr_contrails
+  - datamodule: gr_contrails_binary
   - logger: wandb
-  - model: gr_contrails_unet
+  - model: gr_contrails_binary_resnet
   - trainer: default.yaml
   - hydra: default.yaml
   - paths: default.yaml

@@ -49,10 +49,6 @@ def train(cfg: DictConfig) -> Tuple[dict, dict]:
     datamodule.prepare_data()
     datamodule.setup('fit')
 
-    image, mask = next(iter(datamodule.train_dataloader()))
-    print('Image shape and dtype:', image.shape, image.dtype)
-    print('Label mask shape and dtype:', mask.shape, mask.dtype)
-
     log.info(f'Instantiating model <{cfg.model._target_}>...')
     model: LightningModule = hydra.utils.instantiate(cfg.model)
 
@@ -68,12 +64,12 @@ def train(cfg: DictConfig) -> Tuple[dict, dict]:
     if cfg.get('task_name') == 'train':
         log.info('Starting training...')
         trainer.fit(model=model, datamodule=datamodule, ckpt_path=cfg.get('ckpt_path'))
-        log.info('Testing model...')
-        output: torch.Tensor = trainer.predict(model=model, datamodule=datamodule)
-        output = torch.squeeze(torch.vstack(output))
-        # Round everything to 1 or 0
-        output = torch.round(output).to(torch.int8).detach().numpy()
-        print(output)
+        # log.info('Testing model...')
+        # output: torch.Tensor = trainer.predict(model=model, datamodule=datamodule)
+        # output = torch.squeeze(torch.vstack(output))
+        # # Round everything to 1 or 0
+        # output = torch.round(output).to(torch.int8).detach().numpy()
+        # print(output)
 
 
 
