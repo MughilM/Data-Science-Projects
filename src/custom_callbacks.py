@@ -101,7 +101,11 @@ class ContrailCallback(Callback):
         preds[preds >= 0.5] = 1
         preds[preds < 0.5] = 0
         # Get rid of the singleton dimension...
-        preds = preds.squeeze().cpu().numpy()
+        # TODO: It's possible that the predictions is a single sample i.e. (1, 1, * , *). Handle this case...
+        preds = preds.squeeze()
+        # Convert to numpy if it's currently a torch
+        if isinstance(preds, torch.Tensor):
+            preds = preds.cpu().numpy()
 
         images = self.val_images.cpu().numpy()
         masks = self.val_masks.squeeze().cpu().numpy()
@@ -132,6 +136,7 @@ class ContrailCallback(Callback):
                 ax = plt.subplot(self.num_samples, 3, i + 2)
                 ax.imshow(mask)
             plt.savefig('./seg_images.png')
+            plt.close()
 
     def on_test_epoch_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
         """

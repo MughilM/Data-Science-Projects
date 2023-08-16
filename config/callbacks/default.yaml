@@ -1,4 +1,3 @@
 defaults:
-  - early_stopping.yaml
   - contrail_callback.yaml
   - _self_

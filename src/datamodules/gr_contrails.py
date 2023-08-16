@@ -9,23 +9,17 @@ in a satellite image given input time series images from a series of IR image ba
 WARNING: The training data is 450 GB in size, while the validation data is 33 GB.
 Please ensure that you have space in your disk to contain all the data if you need.
 """
-import os
 import sys
 import zipfile
-import kaggle
-import glob
 from typing import Optional
 import logging
 
 import torch
 from pytorch_lightning.utilities.types import TRAIN_DATALOADERS, EVAL_DATALOADERS
-from pytorch_lightning.utilities.combined_loader import CombinedLoader
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
-from PIL import Image
 
 import pytorch_lightning as pl
-import torchvision.transforms.functional as TF
 
 from src.utils.general_funcs import *
 
@@ -81,12 +75,15 @@ class GRContrailsFalseColorDataset(Dataset):
         # Read in the mask, unless this is a test directory
         if not self.test:
             mask = np.load(os.path.join(self.image_dir, dir_id, 'human_pixel_masks.npy'))
+            # Mask is 256 x 256 x 1, do a transpose so both input image and mask are the same shape.
+            # Also convert to float, since it will be compared with binary cross entropy.
+            mask = torch.from_numpy(np.transpose(mask, (2, 0, 1))).to(float)
+            # Include binary labels if we need to.
             if self.binary:
-                return image, int(np.any(mask))
+                return image, int(torch.any(mask)), mask
             else:
-                # Mask is 256 x 256 x 1, do a transpose so both input image and mask are the same shape.
-                # Also convert to float, since it will be compared with binary cross entropy.
-                return image, torch.from_numpy(np.transpose(mask, (2, 0, 1))).to(float)
+                return image, mask
+        # Test samples don't include ground truth, so just return the image.
         else:
             return image
 
@@ -96,7 +93,7 @@ class GRContrailDataModule(pl.LightningDataModule):
     def __init__(self, comp_name: str = 'google-research-identify-contrails-reduce-global-warming',
                  data_dir: str = 'data/', frac: float = 1.0, batch_size: int = 128, num_workers: int = 4,
                  pin_memory: bool = True, use_val_as_train: bool = True, train_url: str = None,
-                 val_url: str = None, test_url: str = None):
+                 val_url: str = None, test_url: str = None, binary: bool = False):
         super().__init__()
         if (frac > 1) or (frac <= 0):
             logger.error(f'Invalid value for fraction ({frac})!')
@@ -159,13 +156,14 @@ class GRContrailDataModule(pl.LightningDataModule):
                 train_files = [os.path.basename(subdir) for subdir, _, _ in os.walk(train_datapath)][1:]
                 train_files = np.random.choice(train_files, size=int(self.hparams.frac * len(train_files)),
                                                replace=False)
-                self.train_dataset = GRContrailsFalseColorDataset(train_datapath, train_files)
+                self.train_dataset = GRContrailsFalseColorDataset(train_datapath, train_files,
+                                                                  binary=self.hparams.binary)
             else:
-                self.train_dataset = GRContrailsFalseColorDataset(train_datapath)
+                self.train_dataset = GRContrailsFalseColorDataset(train_datapath, binary=self.hparams.binary)
             # Simple setup of validation and testing files
-            self.vali_dataset = GRContrailsFalseColorDataset(val_datapath)
+            self.vali_dataset = GRContrailsFalseColorDataset(val_datapath, binary=self.hparams.binary)
             # self.test_dataset = GRContrailsFalseColorDataset(test_datapath, test=True)
-            self.test_dataset = GRContrailsFalseColorDataset(val_datapath, test=True)
+            self.test_dataset = GRContrailsFalseColorDataset(val_datapath, test=True, binary=self.hparams.binary)
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
         return DataLoader(self.train_dataset, batch_size=self.hparams.batch_size, shuffle=True,
@@ -178,101 +176,3 @@ class GRContrailDataModule(pl.LightningDataModule):
     def predict_dataloader(self) -> EVAL_DATALOADERS:
         return DataLoader(self.test_dataset, batch_size=self.hparams.batch_size, shuffle=False,
                           num_workers=self.hparams.num_workers, pin_memory=self.hparams.pin_memory)
-
-
-class GRContrailBinaryDataModule(GRContrailDataModule):
-    """
-    This data module yields binary labels in addition to the raw masks. Additionally, when yielding
-    the masks, it is GUARANTEED that there will be some pixels that contain contrails.
-    This is for dual training a binary classification and a segmentation network to detect presence
-    of contrails and location of contrails at the same time.
-    It subclasses GRContrailDataModule, because the initialization and the preparation are the same.
-    The setup and the dataloaders are different.
-    """
-    def __init__(self, comp_name: str = 'google-research-identify-contrails-reduce-global-warming',
-                 data_dir: str = 'data/', frac: float = 1.0, batch_size: int = 128, num_workers: int = 4,
-                 pin_memory: bool = True, use_val_as_train: bool = True, train_url: str = None,
-                 val_url: str = None, test_url: str = None):
-        super().__init__(comp_name, data_dir, frac, batch_size, num_workers, pin_memory, use_val_as_train,
-                         train_url, val_url, test_url)
-        # We need additional Dataset objects for the binary and contrail only images
-        self.train_bin_ds: Optional[Dataset] = None
-        self.vali_bin_ds: Optional[Dataset] = None
-        self.test_bin_ds: Optional[Dataset] = None
-        self.train_cr_ds: Optional[Dataset] = None
-        self.vali_cr_ds: Optional[Dataset] = None
-        self.test_cr_ds: Optional[Dataset] = None
-
-    @staticmethod
-    def _get_contrail_ids(subdir):
-        """
-        Gets those contrail image IDs that correspond to images that HAVE contrails in them.
-        :param subdir: The directory to look in, can be train, validation, or test.
-        :return:
-        """
-        all_ids = [os.path.basename(direct) for direct, _, _ in os.walk(subdir)][1:]
-        # Open the mask for each image, and check for any 1s. Append as we go.
-        pos_masks = []
-        for image_id in all_ids:
-            mask = np.load(os.path.join(subdir, image_id, 'human_pixel_masks.npy'))
-            if np.any(mask):
-                pos_masks.append(image_id)
-        return pos_masks
-
-
-    def setup(self, stage: str) -> None:
-        """
-        For setup, we call our Dataset with the binary flag = True, and then call it again
-        with only those images that have contrails in them. This does mean that we need to open
-        each image and check and save a separate file, which will be one time check.
-        :param stage:
-        :return:
-        """
-        # Check only one, because we set everything at once here...
-        if not self.train_cr_ds and not self.train_bin_ds:
-            train_datapath = os.path.join(self.COMP_DATA_PATH, 'train')
-            val_datapath = os.path.join(self.COMP_DATA_PATH, 'validation')
-            val_pos_contrail_ids = self._get_contrail_ids(val_datapath)
-            # Next, create two datasets, one for the binary, and one for the positive contrail masks.
-            # Check for the use_val_as_train flag
-            if self.hparams.use_val_as_train:
-                self.train_bin_ds = GRContrailsFalseColorDataset(val_datapath, binary=True)
-                self.train_cr_ds = GRContrailsFalseColorDataset(val_datapath,  directory_ids=val_pos_contrail_ids)
-            else:
-                train_pos_contrail_ids = self._get_contrail_ids(train_datapath)
-                self.train_bin_ds = GRContrailsFalseColorDataset(train_datapath, binary=True)
-                self.train_cr_ds = GRContrailsFalseColorDataset(train_datapath, directory_ids=train_pos_contrail_ids)
-            # Set up validation and test datasets
-            self.vali_bin_ds = GRContrailsFalseColorDataset(val_datapath, binary=True)
-            self.vali_cr_ds = GRContrailsFalseColorDataset(val_datapath, directory_ids=val_pos_contrail_ids)
-            # For the TEST dataset, we actually just want the raw images, since we don't know which ones are
-            # binary or not. This also holds through the pipeline as well, as we would test the binary clasisfication
-            # before the segmentation classification.
-            test_datapath = os.path.join(self.COMP_DATA_PATH, 'test')
-            self.test_dataset = GRContrailsFalseColorDataset(test_datapath, test=True)
-
-    def train_dataloader(self) -> TRAIN_DATALOADERS:
-        # We create two separate DataLoaders, one for the binary, and one for the contrail-only,
-        # and return a CombinedDataLoader with both. If there are size mismatches, then we will start cycling
-        # the smaller one. That way, o model doesn't have to stop training if it reaches the end.
-        # We will halve the batch size so that the combined data has the same "amount" of data.
-        train_bin_loader = DataLoader(self.train_bin_ds, batch_size=self.hparams.batch_size // 2, shuffle=True,
-                                      num_workers=self.hparams.num_workers, pin_memory=self.hparams.pin_memory)
-        train_cr_loader = DataLoader(self.train_cr_ds, batch_size=self.hparams.batch_size // 2, shuffle=True,
-                                     num_workers=self.hparams.num_workers, pin_memory=self.hparams.pin_memory)
-        return CombinedLoader({'binary': train_bin_loader, 'cr_only': train_cr_loader}, 'max_size_cycle')
-
-    def val_dataloader(self) -> EVAL_DATALOADERS:
-        val_bin_loader = DataLoader(self.vali_bin_ds, batch_size=self.hparams.batch_size // 2, shuffle=True,
-                                      num_workers=self.hparams.num_workers, pin_memory=self.hparams.pin_memory)
-        val_cr_loader = DataLoader(self.vali_cr_ds, batch_size=self.hparams.batch_size // 2, shuffle=True,
-                                     num_workers=self.hparams.num_workers, pin_memory=self.hparams.pin_memory)
-        return CombinedLoader({'binary': val_bin_loader, 'cr_only': val_cr_loader}, 'max_size_cycle')
-
-    def predict_dataloader(self) -> EVAL_DATALOADERS:
-        # For the prediction dataloader, we just want the dataset without being split, to reflect the
-        # actual data that might be fed.
-        return DataLoader(self.test_dataset, batch_size=self.hparams.batch_size, shuffle=False,
-                          num_workers=self.hparams.num_workers, pin_memory=self.hparams.pin_memory)
-
-

@@ -5,7 +5,7 @@ Creation Date: 2023-07-27
 Contains all LightningModule definitions for the Google Research Contrail Detection challenge.
 Some of these require their own LightningDataModules, which will be checked.
 """
-from typing import Any, Optional
+from typing import Any
 import numpy as np
 
 import torch
@@ -13,7 +13,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from torchmetrics import MeanMetric
-from torchmetrics.classification import MulticlassAccuracy, BinaryAccuracy
+from torchmetrics.classification import BinaryAccuracy
 from torchmetrics import Dice
 
 import torchvision.transforms.functional as TF
@@ -108,6 +108,8 @@ class GRContrailBinaryClassifier(pl.LightningModule):
                  beta1: float = 0.5, beta2: float = 0.999):
         super().__init__()
         self.save_hyperparameters(ignore=['binary_model', 'seg_model'])
+        self.automatic_optimization = False
+
         self.binary_model = binary_model
         self.seg_model = seg_model
         self.binary_image_size = binary_image_size
@@ -142,17 +144,21 @@ class GRContrailBinaryClassifier(pl.LightningModule):
         :return:
         """
         transformed = TF.resize(x, [self.binary_image_size, self.binary_image_size])
-        # Get binary outputs
-        binary_outputs = self.binary_model(transformed)
+        # Get binary outputs, and apply sigmoid on them, and squeeze them so they are flattened.
+        binary_outputs = self.binary_model(transformed).sigmoid().squeeze()
         # Get the locations where the binary model predicted presence of a contrail, and pass the original images
         # through to the segmentation model to get masks.
-        seg_inputs = x[torch.where(binary_outputs >= 0.5)]
-        res = self.seg_model(seg_inputs).numpy()
-        # Next, for the images where we don't have predicted contrails, we insert empty masks.
-        insert_locs = torch.where(binary_outputs < 0.5)[0].numpy()
-        zero_masks = np.zeros((len(insert_locs),) + res.shape[1:])
-        res = np.insert(res, insert_locs, zero_masks, axis=0)
-        return res
+        locs = torch.where(binary_outputs >= 0.5)
+        seg_inputs = x[locs]
+        res = self.seg_model(seg_inputs).cpu().numpy()
+        # For the result, we need to collapse into a mask by calling argmax on each pixel.
+        res = np.argmax(res, axis=1)
+        # Next, for the images where we don't have predicted contrails, we substitute empty masks.
+        # To do so, first create a full zero array the same shape as the input.
+        # Using locs, find where we must replace the zero masks with the actual masks.
+        output = np.zeros((len(x),) + x.shape[2:])
+        output[locs[0].cpu().numpy()] = res
+        return output
 
     def configure_optimizers(self) -> Any:
         """
@@ -164,42 +170,52 @@ class GRContrailBinaryClassifier(pl.LightningModule):
         beta2 = self.hparams.beta2
         optimizerB = optim.Adam(params=self.binary_model.parameters(), lr=lr, betas=(beta1, beta2))
         optimizerS = optim.Adam(params=self.seg_model.parameters(), lr=lr, betas=(beta1, beta2))
-        return [optimizerB, optimizerS], []
+        return optimizerB, optimizerS
 
-    def training_step(self, batch, batch_idx, optimizer_idx):
+    def training_step(self, batch, batch_idx):
         """
         For the training step, we get as input a CombinedLoader, so we extract both the images
         for the binary model and the ones for the segmentation model, and train both depending
         on the selected optimizer.
         :param batch:
         :param batch_idx:
-        :param optimizer_idx:
+        :param dataloader_idx:
         :return:
         """
+        b_opt, s_opt = self.optimizers()
+        # Get the full list of binary labels and its masks.
+        # We will only forward the images with contrails to the segmentation model.
+        # While the binary model will get all the images.
+        images, binary_labels, masks = batch
+        contrail_image_locs = torch.where(binary_labels == 1)
+        seg_inputs = images[contrail_image_locs]
+        seg_masks = masks[contrail_image_locs]
+
         # Train binary model
-        if optimizer_idx == 0:
-            bin_batch = batch['binary']
-            images, labels = bin_batch
-            output = self.binary_model(images)
-            accuracy = self.accuracy(output, labels)
-            self.train_b_acc(accuracy)
-            # Calculate loss
-            b_loss = self.binary_loss(output, labels)
-            self.log('train/b_loss', b_loss, prog_bar=False)
-            self.log('train/b_acc', self.train_b_acc, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-            return b_loss
-        # Train segmentation model (not necessarily the same batch)
-        if optimizer_idx == 1:
-            seg_batch = batch['cr_only']
-            images, masks = seg_batch
-            output_masks = self.seg_model(images)
-            accuracy = self.accuracy(output_masks, masks)
-            self.train_s_acc(output_masks, masks)
-            # Calculate loss (it's still binary cross entropy, but the weightings are different)
-            s_loss = self.seg_loss(output_masks, masks)
-            self.log('train/s_loss', s_loss, prog_bar=False)
-            self.log('train/s_acc', self.train_s_acc, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-            return s_loss
+        output = self.binary_model(images)
+        accuracy = self.accuracy(output.squeeze(), binary_labels)
+        self.train_b_acc(accuracy)
+        # Calculate loss
+        b_loss = self.binary_loss(output.squeeze(), binary_labels.to(float))
+        self.log('train/b_loss', b_loss, prog_bar=False)
+        self.log('train/b_acc', self.train_b_acc, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+
+        b_opt.zero_grad()
+        self.manual_backward(b_loss)
+        b_opt.step()
+
+        # Train segmentation model with just the contrail images
+        output_masks = self.seg_model(seg_inputs)
+        accuracy = self.accuracy(output_masks, seg_masks)
+        self.train_s_acc(accuracy)
+        # Calculate loss (it's still binary cross entropy, but the weightings are different)
+        s_loss = self.seg_loss(output_masks, seg_masks)
+        self.log('train/s_loss', s_loss, prog_bar=False)
+        self.log('train/s_acc', self.train_s_acc, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+
+        s_opt.zero_grad()
+        self.manual_backward(s_loss)
+        s_opt.step()
 
     def validation_step(self, batch, batch_idx):
         """
@@ -209,19 +225,20 @@ class GRContrailBinaryClassifier(pl.LightningModule):
         :param batch_idx:
         :return:
         """
-        bin_batch = batch['binary']
-        images, labels = bin_batch
+        images, binary_labels, masks = batch
+        contrail_image_locs = torch.where(binary_labels == 1)
+        seg_inputs = images[contrail_image_locs]
+        seg_masks = masks[contrail_image_locs]
+
         output = self.binary_model(images)
-        accuracy = self.accuracy(output, labels)
+        accuracy = self.accuracy(output.squeeze(), binary_labels)
         self.val_b_acc(accuracy)
         self.log('val/b_acc', self.val_b_acc, on_step=False, on_epoch=True, prog_bar=True, logger=True)
 
-        seg_batch = batch['cr_only']
-        images, masks = seg_batch
-        output_masks = self.seg_model(images)
-        accuracy = self.accuracy(output_masks, masks)
+        output_masks = self.seg_model(seg_inputs)
+        accuracy = self.accuracy(output_masks, seg_masks)
         self.val_s_acc(accuracy)
-        self.val_dice(output_masks, masks)
+        self.val_dice(output_masks, seg_masks.to(torch.int))
         self.log('val/s_acc', self.val_s_acc, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         self.log('val/s_dice', self.val_dice, on_step=False, on_epoch=True, prog_bar=True, logger=True)
 
