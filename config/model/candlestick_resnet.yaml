@@ -1,4 +1,4 @@
-_target_: src.models.cancer_image_module.CancerImageClassifier
+_target_: src.models.candlestick_modules.CandlestickClassifierModule
 
 optimizer:
   _target_: torch.optim.Adam
@@ -6,9 +6,8 @@ optimizer:
   lr: 0.001
   weight_decay: 0.0
 
-net:
+neural_net:
   _target_: src.models.nets.resnet.ResNet
   name: resnet50
   output_size: 1
-
-
+  finetune: false

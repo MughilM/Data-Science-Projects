@@ -49,13 +49,17 @@ def train(cfg: DictConfig) -> Tuple[dict, dict]:
     datamodule.prepare_data()
     datamodule.setup('fit')
 
+    next(iter(datamodule.train_dataloader()))
+
     log.info(f'Instantiating model <{cfg.model._target_}>...')
     model: LightningModule = hydra.utils.instantiate(cfg.model)
 
     # seg_image_callback = SegmentationImageCallback(datamodule, num_classes=1)
     log.info('Instantiating callbacks')
-    callbacks: List[Callback] = instantiate_callbacks(cfg.get('callbacks'))
-
+    if cfg.get('callbacks'):
+        callbacks: List[Callback] = instantiate_callbacks(cfg.get('callbacks'))
+    else:
+        callbacks = []
 
     log.info(f'Instantiating Trainer...')
     trainer: Trainer = hydra.utils.instantiate(cfg.trainer, logger=wandb_logger, callbacks=callbacks)

@@ -1,0 +1,11 @@
+_target_: src.datamodules.candlestick.CandleDataModule
+
+comp_name: "NASDAQ 100 Index Components"
+data_dir: ${paths.data_dir}
+look_back_days: 150
+max_look_forward_days: 10
+target_look_forward_day: 5
+validation_start_date: 2016-01-01
+batch_size: 128
+num_workers: 4
+pin_memory: True

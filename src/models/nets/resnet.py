@@ -12,15 +12,16 @@ from torchvision.models import resnet50, ResNet50_Weights
 
 
 class ResNet(nn.Module):
-    def __init__(self, name: str = 'resnet50', output_size: int = 1):
+    def __init__(self, name: str = 'resnet50', output_size: int = 1, finetune: bool = False):
         super().__init__()
 
         self.resnet = resnet50(weights=ResNet50_Weights.IMAGENET1K_V1)
         # We need to freeze all the layers, so they
         # don't get trained and waste time
-        self.resnet.eval()
-        for param in self.resnet.parameters():
-            param.requires_grad = False
+        if not finetune:
+            self.resnet.eval()
+            for param in self.resnet.parameters():
+                param.requires_grad = False
         # Once it's frozen, we adapt the fully-connected
         # layer to the output size we need. This will
         # get trained.
