@@ -105,7 +105,7 @@ class GRContrailsClassifierModule(pl.LightningModule):
 
 class GRContrailBinaryClassifier(pl.LightningModule):
     def __init__(self, binary_model: nn.Module, seg_model: nn.Module, binary_image_size: int, lr: float = 0.005,
-                 beta1: float = 0.5, beta2: float = 0.999):
+                 beta1: float = 0.5, beta2: float = 0.999, seg_threshold: float = 0.5):
         super().__init__()
         self.save_hyperparameters(ignore=['binary_model', 'seg_model'])
         self.automatic_optimization = False
@@ -116,7 +116,7 @@ class GRContrailBinaryClassifier(pl.LightningModule):
         # Both the image binary classifier and the image segmentation tasks will use
         # the BCEWithLogitsLoss. The segmentation will be weighted, while the whole image binary
         # will be unweighted.
-        self.seg_loss = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([90]))
+        self.seg_loss = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([5]))
         self.binary_loss = nn.BCEWithLogitsLoss()
         # For metrics, we'll have accuracy, but we'll also use the Dice coefficient,
         # which is what the competition uses.
@@ -148,16 +148,18 @@ class GRContrailBinaryClassifier(pl.LightningModule):
         binary_outputs = self.binary_model(transformed).sigmoid().squeeze()
         # Get the locations where the binary model predicted presence of a contrail, and pass the original images
         # through to the segmentation model to get masks.
-        locs = torch.where(binary_outputs >= 0.5)
+        locs = torch.where(binary_outputs >= self.hparams.seg_threshold)
         seg_inputs = x[locs]
-        res = self.seg_model(seg_inputs).cpu().numpy()
+        # Because this is binary, the segmodel will return (samples, 1, image size), so squeeze it out.
+        # Then, apply sigmoid to it, so we can extract the probabilities, and finally convert to 0, 1.
+        res = self.seg_model(seg_inputs).squeeze().sigmoid().cpu().numpy()
         # For the result, we need to collapse into a mask by calling argmax on each pixel.
-        res = np.argmax(res, axis=1)
+        class_outputs = res.round()
         # Next, for the images where we don't have predicted contrails, we substitute empty masks.
         # To do so, first create a full zero array the same shape as the input.
         # Using locs, find where we must replace the zero masks with the actual masks.
         output = np.zeros((len(x),) + x.shape[2:])
-        output[locs[0].cpu().numpy()] = res
+        output[locs[0].cpu().numpy()] = class_outputs
         return output
 
     def configure_optimizers(self) -> Any:
@@ -205,17 +207,20 @@ class GRContrailBinaryClassifier(pl.LightningModule):
         b_opt.step()
 
         # Train segmentation model with just the contrail images
+        # There is a small chance that the batch does not contain ANY
+        # contrail images. In this case, just skip this batch.
         output_masks = self.seg_model(seg_inputs)
-        accuracy = self.accuracy(output_masks, seg_masks)
-        self.train_s_acc(accuracy)
-        # Calculate loss (it's still binary cross entropy, but the weightings are different)
-        s_loss = self.seg_loss(output_masks, seg_masks)
-        self.log('train/s_loss', s_loss, prog_bar=False)
-        self.log('train/s_acc', self.train_s_acc, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        if len(output_masks) > 0:
+            accuracy = self.accuracy(output_masks, seg_masks)
+            self.train_s_acc(accuracy)
+            # Calculate loss (it's still binary cross entropy, but the weightings are different)
+            s_loss = self.seg_loss(output_masks, seg_masks)
+            self.log('train/s_loss', s_loss, prog_bar=False)
+            self.log('train/s_acc', self.train_s_acc, on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
-        s_opt.zero_grad()
-        self.manual_backward(s_loss)
-        s_opt.step()
+            s_opt.zero_grad()
+            self.manual_backward(s_loss)
+            s_opt.step()
 
     def validation_step(self, batch, batch_idx):
         """
