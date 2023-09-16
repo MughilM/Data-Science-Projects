@@ -7,4 +7,5 @@
 archive/
 logs/
 data/
+sandbox/
 mlruns

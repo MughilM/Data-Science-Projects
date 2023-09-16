@@ -26,7 +26,7 @@ class CandlestickClassifierModule(pl.LightningModule):
         self.neural_net = neural_net
         self.optimizer = optimizer
         # This is a binary classifier, so we use BCEWithLogitsLoss
-        self.loss = nn.BCEWithLogitsLoss()
+        self.loss = nn.BCEWithLogitsLoss(pos_weight=torch.Tensor([9]))
         # For metrics, we can use accuracy, and F1 score as well to get a measure of precision/recall.
         self.train_acc = BinaryAccuracy()
         self.val_acc = BinaryAccuracy()
