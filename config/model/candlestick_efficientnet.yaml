@@ -1,0 +1,14 @@
+_target_: src.models.candlestick_modules.CandlestickClassifierModule
+
+optimizer:
+  _target_: torch.optim.Adam
+  _partial_: True
+  lr: 0.001
+  weight_decay: 0.0
+
+neural_net:
+  _target_: src.models.nets.efficientnet.EfficientNet
+  level: 5
+  output_size: 1
+  weights: random
+  finetune: true

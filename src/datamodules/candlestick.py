@@ -42,7 +42,7 @@ class CandleDataset(Dataset):
     The given folder will have subfolders for each stock, and each image will be labeled by the END DATE.
     """
 
-    def __init__(self, image_folder: str, price_df: pd.DataFrame, target_day: int, transform=T.ToTensor(),
+    def __init__(self, image_folder: str, price_df: pd.DataFrame, target_day: int, transform: T.Compose,
                  min_price_increase: float = 0.0):
         super().__init__()
         self.image_folder = image_folder
@@ -96,6 +96,17 @@ class CandleDataModule(pl.LightningDataModule):
         os.makedirs(self.MINUTE_STOCK_PATH, exist_ok=True)
         os.makedirs(self.DAILY_STOCK_PATH, exist_ok=True)
         # os.makedirs(self.IMAGE_DATA_PATH, exist_ok=True)
+
+        self.train_transform = T.Compose([
+            T.Resize((401, 401)),
+            T.ToTensor(),
+            T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+        self.val_transform = T.Compose([
+            T.Resize((401, 401)),
+            T.ToTensor(),
+            T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
 
         self.train_dataset: Optional[Dataset] = None
         self.val_dataset: Optional[Dataset] = None
@@ -269,11 +280,11 @@ class CandleDataModule(pl.LightningDataModule):
             logger.info(f'Validation size: {val_prices.shape[0]}')
             self.train_dataset = CandleDataset(self.IMAGE_DATA_PATH, train_prices,
                                                target_day=self.hparams.target_look_forward_day,
-                                               transform=T.Compose([T.Resize((224, 224)), T.ToTensor()]),
+                                               transform=self.train_transform,
                                                min_price_increase=self.hparams.min_price_increase)
             self.val_dataset = CandleDataset(self.IMAGE_DATA_PATH, val_prices,
                                              target_day=self.hparams.target_look_forward_day,
-                                             transform=T.Compose([T.Resize((224, 224)), T.ToTensor()]),
+                                             transform=self.val_transform,
                                              min_price_increase=self.hparams.min_price_increase)
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
