@@ -1,5 +1,5 @@
 """
-File: src/models/gr_contrails_modules.py
+File: src/models/gr_contrails_model.py
 Creation Date: 2023-07-27
 
 Contains all LightningModule definitions for the Google Research Contrail Detection challenge.

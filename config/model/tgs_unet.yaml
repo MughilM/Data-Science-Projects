@@ -1,4 +1,4 @@
-_target_: src.models.segmentation_modules.TGSSaltClassifierModule
+_target_: src.models.tgs_salt_model.TGSSaltClassifierModule
 
 optimizer:
   _target_: torch.optim.Adam

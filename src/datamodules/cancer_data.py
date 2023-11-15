@@ -1,5 +1,5 @@
 """
-File: cancer_module.py
+File: cancer_data.py
 Creation Date: 2023-01-07
 
 Contains the DataModule definition for the histopathologic-cancer-detection
@@ -10,6 +10,7 @@ from typing import Optional
 import zipfile
 import kaggle
 import glob
+import logging
 
 from sklearn.model_selection import train_test_split
 import pandas as pd
@@ -19,6 +20,7 @@ import pytorch_lightning as pl
 from torch.utils.data import DataLoader, Dataset
 import torchvision.transforms as T
 
+log = logging.getLogger('train.lit_module')
 
 class CancerDataset(Dataset):
     def __init__(self, data_folder, file_id_df=None, transform=T.Compose([T.CenterCrop(32), T.ToTensor()]),
@@ -78,12 +80,12 @@ class CancerDataModule(pl.LightningDataModule):
         """
         # Download the competition files if the directory doesn't exist
         if not os.path.exists(self.COMP_DATA_PATH):
-            print(f'Downloading {self.hparams.comp_name} competition files...')
+            log.info(f'Downloading {self.hparams.comp_name} competition files...')
             kaggle.api.competition_download_files(self.hparams.comp_name, path=self.hparams.data_dir, quiet='False')
-            print(f'Extracting contents into {self.COMP_DATA_PATH}...')
+            log.info(f'Extracting contents into {self.COMP_DATA_PATH}...')
             with zipfile.ZipFile(os.path.join(self.hparams.data_dir, f'{self.hparams.comp_name}.zip'), 'r') as zip_ref:
                 zip_ref.extractall(self.COMP_DATA_PATH)
-            print('Deleting zip file...')
+            log.info('Deleting zip file...')
             os.remove(os.path.join(self.hparams.data_dir, f'{self.hparams.comp_name}.zip'))
 
     def setup(self, stage: Optional[str] = None) -> None:
@@ -102,8 +104,8 @@ class CancerDataModule(pl.LightningDataModule):
                 labels = labels.sample(n=self.hparams.downsample_n)
             # Split training and validation
             train_files, validation_files = train_test_split(labels, test_size=self.hparams.validation_split)
-            print(f'Number of images in training: {len(train_files)}')
-            print(f'Number of images in validation: {len(validation_files)}')
+            log.info(f'Number of images in training: {len(train_files)}')
+            log.info(f'Number of images in validation: {len(validation_files)}')
             # Now load the Dataset objects
             self.train_dataset = CancerDataset(data_folder=os.path.join(self.COMP_DATA_PATH, 'train'),
                                                file_id_df=train_files,
@@ -116,12 +118,15 @@ class CancerDataModule(pl.LightningDataModule):
 
     def train_dataloader(self):
         return DataLoader(self.train_dataset, batch_size=self.hparams.batch_size, shuffle=True,
-                          num_workers=self.hparams.num_workers, pin_memory=self.hparams.pin_memory)
+                          num_workers=self.hparams.num_workers, pin_memory=self.hparams.pin_memory,
+                          persistent_workers=True)
 
     def val_dataloader(self):
         return DataLoader(self.vali_dataset, batch_size=self.hparams.batch_size,
-                          num_workers=self.hparams.num_workers, pin_memory=self.hparams.pin_memory)
+                          num_workers=self.hparams.num_workers, pin_memory=self.hparams.pin_memory,
+                          persistent_workers=True)
 
     def predict_dataloader(self):
         return DataLoader(self.test_dataset, batch_size=self.hparams.batch_size,
-                          num_workers=self.hparams.num_workers, pin_memory=self.hparams.pin_memory)
+                          num_workers=self.hparams.num_workers, pin_memory=self.hparams.pin_memory,
+                          persistent_workers=True)

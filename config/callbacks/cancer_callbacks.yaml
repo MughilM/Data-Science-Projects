@@ -1,0 +1,5 @@
+defaults:
+  - model_checkpoint: default
+  - rich_progress_bar: default
+  - plot_mc_confusion_matrix: default
+  - _self_

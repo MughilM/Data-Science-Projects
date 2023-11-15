@@ -1,4 +1,4 @@
-_target_: src.models.gr_contrails_modules.GRContrailBinaryClassifier
+_target_: src.models.gr_contrails_model.GRContrailBinaryClassifier
 
 binary_model:
   _target_: src.models.nets.resnet.ResNet

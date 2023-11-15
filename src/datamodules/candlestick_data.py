@@ -1,5 +1,5 @@
 """
-File: src/datamodules/candlestick.py
+File: src/datamodules/candlestick_data.py
 Creation Date: 2023-08-08
 
 This file contains the definitions to generate candlestick plots, and their corresponding

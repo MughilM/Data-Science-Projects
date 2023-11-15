@@ -1,4 +1,4 @@
-_target_: src.models.segmentation_modules.GRContrailsClassifierModule
+_target_: src.models.gr_contrails_model.GRContrailsClassifierModule
 
 optimizer:
   _target_: torch.optim.Adam

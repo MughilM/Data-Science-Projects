@@ -1,0 +1,14 @@
+# @package _global_
+defaults:
+  - override /callbacks:
+      - model_checkpoint
+      - rich_progress_bar
+      - plot_mc_confusion_matrix
+  - override /datamodule: cancer
+  - override /model: cancer_resnet
+
+wandb_enabled: True
+
+override callbacks.plot_mc_confusion_matrix.labels:
+  - "zero"
+  - "one"

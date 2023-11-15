@@ -1,0 +1,9 @@
+# Plots a confusion matrix and logs using plotly for a multiclass problem
+
+plot_mc_confusion_matrix:
+  _target_: src.custom_callbacks.PlotMulticlassConfusionMatrix
+  labels:
+    - "0"
+    - "1"
+  matrix_attr: "matrix"
+  val_acc_attr: "val_acc"

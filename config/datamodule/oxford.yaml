@@ -1,4 +1,4 @@
-_target_: src.datamodules.oxford_module.OxfordDataModule
+_target_: src.datamodules.oxford_data.OxfordDataModule
 
 data_dir: ${paths.data_dir}
 comp_name: oxford

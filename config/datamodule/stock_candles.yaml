@@ -1,4 +1,4 @@
-_target_: src.datamodules.candlestick.CandleDataModule
+_target_: src.datamodules.candlestick_data.CandleDataModule
 
 comp_name: "NASDAQ 100 Index Components"
 data_dir: ${paths.data_dir}

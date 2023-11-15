@@ -1,4 +1,4 @@
-_target_: src.datamodules.tgs_salt_module.TGSSaltDataModule
+_target_: src.datamodules.tgs_salt_data.TGSSaltDataModule
 
 data_dir: ${paths.data_dir}
 comp_name: tgs-salt-identification-challenge

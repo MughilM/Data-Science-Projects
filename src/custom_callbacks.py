@@ -5,16 +5,26 @@ This file contains any custom callbacks in the form of classes. They will be use
 the callbacks/default.yaml configuration file. Some are general-use, while others are
 specific to the dataset due to other considerations.
 """
+import sys
+from typing import List
+import io
+import logging
 
 import torch
+from torchmetrics import ConfusionMatrix, Accuracy
+import numpy as np
+from PIL import Image
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import Callback
 import wandb
 import matplotlib.pyplot as plt
+import plotly.express as px
 
 from omegaconf import DictConfig, OmegaConf
-from src.datamodules.gr_contrails import GRContrailsFalseColorDataset
+from src.datamodules.gr_contrails_data import GRContrailsFalseColorDataset
+
+log = logging.getLogger('train.callback')
 
 class SegmentationImageCallback(Callback):
     def __init__(self, num_samples=10, num_classes=3, class_labels: DictConfig = None, wandb_enabled: bool = True):
@@ -148,3 +158,39 @@ class ContrailCallback(Callback):
         pass
 
 
+class PlotMulticlassConfusionMatrix(Callback):
+    """
+    This callback plots a simple confusion matrix, and logs it to Weights and Biases as well.
+    This is designed to be used for multiclass classification, where each label is mutually exclusive.
+    To plot a multilabel matrix, where each label is NOT exclusive, please use PlotMultilabelConfusionMatrix.
+    The plot only happens at the end of validation.
+    """
+    def __init__(self, labels: List, matrix_attr: str = 'matrix', val_acc_attr: str = 'val_acc'):
+        self.labels = list(labels)
+        self.matrix_attr = matrix_attr
+        self.val_acc_attr = val_acc_attr
+
+    def on_validation_epoch_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
+        # Get the objects for the confusion matrix and validation accuracy, and exit the
+        # program if the specific ones aren't available.
+        matrix: ConfusionMatrix = getattr(pl_module, self.matrix_attr)
+        acc_metric: Accuracy = getattr(pl_module, self.val_acc_attr)
+
+        if matrix is None:
+            log.error(f'Matrix of name "{self.matrix_attr}" not available! Exiting...')
+            sys.exit(1)
+        if acc_metric is None:
+            log.error(f'Accuracy metrix of name "{self.val_acc_attr}" not available! Exiting...')
+            sys.exit(1)
+
+        result: np.ndarray = pl_module.matrix.compute().cpu().numpy().T
+        fig = px.imshow(result, text_auto=True, x=self.labels, y=self.labels,
+                        title=f'Accuracy: {pl_module.val_acc.compute() * 100:2.3f}%')
+        fig.update_xaxes(side='top', type='category', title='Actual')
+        fig.update_yaxes(type='category', title='Predicted')
+        img_bytes = fig.to_image(engine='kaleido')
+
+        # Reset the matrix
+        pl_module.matrix.reset()
+        # Log it in W and B
+        pl_module.logger.log_image('conf_matrix', [Image.open(io.BytesIO(img_bytes))])

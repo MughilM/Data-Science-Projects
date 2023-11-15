@@ -1,4 +1,4 @@
-_target_: src.models.candlestick_modules.CandlestickClassifierModule
+_target_: src.models.candlestick_model.CandlestickClassifierModule
 
 optimizer:
   _target_: torch.optim.Adam

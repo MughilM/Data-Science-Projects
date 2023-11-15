@@ -1,5 +1,5 @@
 """
-File: tgs_salt_module.py
+File: tgs_salt_data.py
 Creation Date: 2023-06-05
 
 This file contains DataModule definitions for the TGS Salt Identification

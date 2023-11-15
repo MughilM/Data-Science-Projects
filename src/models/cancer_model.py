@@ -1,5 +1,5 @@
 """
-File: cancer_image_module.py
+File: cancer_model.py
 Creation Date: 2023-01-07
 
 Contains LightningModule for detecting cancer images. Should be used
@@ -10,7 +10,7 @@ from typing import Any
 import torch
 from torch import nn, optim
 import pytorch_lightning as pl
-from torchmetrics import MeanMetric, MaxMetric
+from torchmetrics import MeanMetric, MaxMetric, ConfusionMatrix
 from torchmetrics.classification import BinaryAccuracy
 
 
@@ -27,11 +27,15 @@ class CancerImageClassifier(pl.LightningModule):
         self.loss = nn.BCEWithLogitsLoss()
 
         # All tasks will use binary accuracy
-        self.binary_accuracy = BinaryAccuracy()
+        self.train_acc = BinaryAccuracy()
+        self.val_acc = BinaryAccuracy()
 
         # We also need to average losses across batches, so set MeanMetrics up...
         self.train_loss = MeanMetric()
         self.val_loss = MeanMetric()
+
+        # Finally, have a confusion matrix...
+        self.matrix = ConfusionMatrix(task='binary')
 
     def forward(self, x: torch.Tensor):
         return self.net(x)
@@ -48,22 +52,23 @@ class CancerImageClassifier(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         inputs, targets = batch
         outputs = self(inputs)
-        train_accuracy = self.binary_accuracy(outputs.squeeze(), targets)
         loss = self.loss(outputs, targets.unsqueeze(dim=-1).float())
         self.train_loss(loss)  # Update our current loss, will hold average loss so far...
+        self.train_acc(outputs.squeeze(), targets)
         self.log('train/loss', self.train_loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        self.log('train/acc', train_accuracy, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        return {'loss': loss, 'acc': train_accuracy}
+        self.log('train/acc', self.train_acc, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        return {'loss': loss, 'acc': self.train_acc}
 
     def validation_step(self, batch, batch_idx):
         inputs, targets = batch
         outputs = self(inputs)
-        val_accuracy = self.binary_accuracy(outputs.squeeze(), targets)
         loss = self.loss(outputs, targets.unsqueeze(dim=-1).float())
         self.val_loss(loss)  # Update our current validation loss
+        self.val_acc(outputs.squeeze(), targets)
+        self.matrix.update(outputs.squeeze(), targets)
         self.log('val/loss', self.val_loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        self.log('val/acc', val_accuracy, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        return {'loss': loss, 'acc': val_accuracy}
+        self.log('val/acc', self.val_acc, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        return {'loss': loss, 'acc': self.val_acc}
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         inputs, _ = batch

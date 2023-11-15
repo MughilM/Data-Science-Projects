@@ -1,4 +1,4 @@
-_target_: src.models.cancer_image_module.CancerImageClassifier
+_target_: src.models.cancer_model.CancerImageClassifier
 
 optimizer:
   _target_: torch.optim.Adam

@@ -1,3 +1,5 @@
 defaults:
-  - contrail_callback.yaml
+  - early_stopping
+  - model_checkpoint
+  - rich_progress_bar
   - _self_

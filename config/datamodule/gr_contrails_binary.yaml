@@ -1,4 +1,4 @@
-_target_: src.datamodules.gr_contrails.GRContrailDataModule
+_target_: src.datamodules.gr_contrails_data.GRContrailDataModule
 
 comp_name: google-research-identify-contrails-reduce-global-warming
 data_dir: ${paths.data_dir}

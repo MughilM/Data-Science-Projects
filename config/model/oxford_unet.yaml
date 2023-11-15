@@ -1,4 +1,4 @@
-_target_: src.models.oxford_modules.OxfordSegmentationClassifierModule
+_target_: src.models.oxford_model.OxfordSegmentationClassifierModule
 
 optimizer:
   _target_: torch.optim.Adam

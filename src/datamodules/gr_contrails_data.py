@@ -1,5 +1,5 @@
 """
-File: gr_contrails.py
+File: gr_contrails_data.py
 Creation Date: 2023-07-10
 
 This file contains DataModule definitions for the Google Research Contrails challenge.
