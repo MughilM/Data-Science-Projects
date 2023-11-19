@@ -79,8 +79,8 @@ class GRContrailsClassifierModule(pl.LightningModule):
         self.val_acc(accuracy)
         self.val_loss(loss)
         # Log
-        self.log('val/dice', self.val_dice, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        self.log('val/loss', self.val_loss, on_step=True, on_epoch=True, prog_bar=False, logger=True)
+        self.log('val/dice', self.val_dice, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        self.log('val/loss', self.val_loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         self.log('val/acc', self.val_acc, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         return {'loss': loss, 'acc': accuracy}
 

@@ -4,6 +4,7 @@ from pytorch_lightning.callbacks import Callback
 
 import hydra
 import logging
+import omegaconf
 
 logger = logging.getLogger('train.utils')
 
@@ -23,6 +24,8 @@ def instantiate_callbacks(callbacks_cfg: DictConfig) -> List[Callback]:
     for _, cb_conf in callbacks_cfg.items():
         if isinstance(cb_conf, DictConfig) and "_target_" in cb_conf:
             logger.info(f"Instantiating callback <{cb_conf._target_}>")
+            print(cb_conf)
+            print(omegaconf.OmegaConf.to_object(cb_conf))
             callbacks.append(hydra.utils.instantiate(cb_conf))
 
     return callbacks

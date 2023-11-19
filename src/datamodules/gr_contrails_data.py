@@ -185,12 +185,15 @@ class GRContrailDataModule(pl.LightningDataModule):
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
         return DataLoader(self.train_dataset, batch_size=self.hparams.batch_size, shuffle=True,
-                          num_workers=self.hparams.num_workers, pin_memory=self.hparams.pin_memory)
+                          num_workers=self.hparams.num_workers, pin_memory=self.hparams.pin_memory,
+                          persistent_workers=True)
 
     def val_dataloader(self) -> EVAL_DATALOADERS:
         return DataLoader(self.vali_dataset, batch_size=self.hparams.batch_size, shuffle=False,
-                          num_workers=self.hparams.num_workers, pin_memory=self.hparams.pin_memory)
+                          num_workers=self.hparams.num_workers, pin_memory=self.hparams.pin_memory,
+                          persistent_workers=True)
 
     def predict_dataloader(self) -> EVAL_DATALOADERS:
         return DataLoader(self.test_dataset, batch_size=self.hparams.batch_size, shuffle=False,
-                          num_workers=self.hparams.num_workers, pin_memory=self.hparams.pin_memory)
+                          num_workers=self.hparams.num_workers, pin_memory=self.hparams.pin_memory,
+                          persistent_workers=True)
