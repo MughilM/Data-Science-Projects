@@ -5,10 +5,10 @@ defaults:
       - rich_progress_bar
       - contrail_callback
   - override /datamodule: gr_contrails
-  - override /model: gr_contrails_unet
+  - override /model: gr_contrails_deeplabv3
   - _self_
 
 wandb_enabled: True
 callbacks:
   contrail_callback:
-    num_classes: 1
+    num_classes: 2

@@ -11,16 +11,20 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from pytorch_lightning.utilities.types import OptimizerLRScheduler
 
 from torchmetrics import MeanMetric
-from torchmetrics.classification import BinaryAccuracy
+from torchmetrics.classification import BinaryAccuracy, MulticlassAccuracy
 from torchmetrics import Dice
 
 import torchvision.transforms.functional as TF
+from torch.hub import load_state_dict_from_url
 
 import pytorch_lightning as pl
 
 from src.models.nets.unet import UMobileNet
+from src.models.nets.deeplab import DeepLabV3, DeepLabHeadV3Plus, ResNet
+from src.models.nets.special_modules import Bottleneck, IntermediateLayerGetter
 
 
 class GRContrailsClassifierModule(pl.LightningModule):
@@ -246,6 +250,88 @@ class GRContrailBinaryClassifier(pl.LightningModule):
         self.val_dice(output_masks, seg_masks.to(torch.int))
         self.log('val/s_acc', self.val_s_acc, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         self.log('val/s_dice', self.val_dice, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+
+
+# Source: https://github.com/VainF/DeepLabV3Plus-Pytorch/tree/master
+class GRContrailsDeepLabResNet50(pl.LightningModule):
+    def __init__(self, optimizer: torch.optim, output_stride=8, aspp_dilate=[12, 24, 36], inplanes=2048, low_level_planes=256,
+                 return_layers={'layer4': 'out', 'layer1': 'low_level'}):
+        super().__init__()
+        self.save_hyperparameters()
+        self.optimizer = optimizer
+        # We will build a DeepLabV3+ model with a ResNet50 backbone.
+        # TODO: Allow other backbones (may not be necessary)
+        # Get the ResNet50 model from the URL
+        RESNET50_URL = 'https://download.pytorch.org/models/resnet50-19c8e357.pth'
+        model = ResNet(Bottleneck, [3, 4, 6, 3], replace_stride_with_dilation=[False, True, True])
+        state_dict = load_state_dict_from_url(RESNET50_URL, progress=True)
+        model.load_state_dict(state_dict)
+        # Create the classifier, and attach the backbone and the classifier to create the full model.
+        classifier = DeepLabHeadV3Plus(inplanes, low_level_planes, 2, aspp_dilate)
+        backbone = IntermediateLayerGetter(model, return_layers=return_layers)
+        self.final_model = DeepLabV3(backbone, classifier)
+
+        # Create loss and metric classes
+        self.loss = nn.CrossEntropyLoss(weight=torch.tensor([1, 99], dtype=torch.float32))
+        self.accuracy = MulticlassAccuracy(num_classes=2)
+
+        self.train_loss = MeanMetric()
+        self.val_loss = MeanMetric()
+
+        self.train_acc = MeanMetric()
+        self.val_acc = MeanMetric()
+
+        # Create additional variables for the dice coefficients.
+        self.train_dice = Dice()
+        self.val_dice = Dice()
+
+    def forward(self, x):
+        return self.final_model(x)
+
+    def configure_optimizers(self) -> OptimizerLRScheduler:
+        optimizer = self.optimizer(params=self.parameters())
+        # Set the learning rate scheduler
+        lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10000)
+        return {'optimizer': optimizer, 'lr_scheduler': lr_scheduler}
+
+    def training_step(self, batch, batch_idx):
+        input_images, masks = batch
+        output_masks = self(input_images)
+        masks = masks.squeeze()
+        # Calculate training accuracy, training loss, and training dice. Only log the dice since that's important.
+        # With DeepLabV3, the output is 2 x 256 x 256, so we have to call argmax before passing through BinaryAccuracy
+        accuracy = self.accuracy(output_masks, masks)
+        loss = self.loss(output_masks, masks.to(int))
+        dice = self.train_dice(output_masks, masks.to(int))
+        # Update accuracy and loss.
+        self.train_acc(accuracy)
+        self.train_loss(loss)
+        # Log
+        self.log('train/dice', self.train_dice, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        self.log('train/loss', self.train_loss, on_step=True, on_epoch=True, prog_bar=False, logger=True)
+        self.log('train/acc', self.train_acc, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        return {'loss': loss, 'acc': accuracy}
+
+    def validation_step(self, batch, batch_idx):
+        input_images, masks = batch
+        output_masks = self(input_images)
+        masks = masks.squeeze()
+        # Calculate training accuracy, training loss, and training dice. Only log the dice since that's important.
+        accuracy = self.accuracy(output_masks, masks)
+        loss = self.loss(output_masks, masks.to(int))
+        dice = self.val_dice(output_masks, masks.to(int))
+        # Update accuracy and loss.
+        self.val_acc(accuracy)
+        self.val_loss(loss)
+        # Log
+        self.log('val/dice', self.val_dice, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        self.log('val/loss', self.val_loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        self.log('val/acc', self.val_acc, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        return {'loss': loss, 'acc': accuracy}
+
+
+
+
 
 
 

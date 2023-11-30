@@ -13,3 +13,4 @@ contrail_callback:
     - "6558861185867890815"
     - "82272245413161715"
   wandb_enabled: ${wandb_enabled}
+  num_classes: 2

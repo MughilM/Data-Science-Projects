@@ -1,0 +1,18 @@
+_target_: src.models.gr_contrails_model.GRContrailsDeepLabResNet50
+
+optimizer:
+  _target_: torch.optim.SGD
+  lr: 0.2
+  momentum: 0.9
+  _partial_: True
+
+output_stride: 8
+aspp_dilate:
+  - 12
+  - 24
+  - 36
+inplanes: 2048
+low_level_planes: 256
+return_layers:
+  layer4: "out"
+  layer1: "low_level"

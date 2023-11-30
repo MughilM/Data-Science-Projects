@@ -51,13 +51,14 @@ class SegmentationImageCallback(Callback):
         # Get the prediction
         self.val_images = self.val_images.to(pl_module.device)
         preds = pl_module(self.val_images)
-        if self.num_classes == 2:
+        if self.num_classes == 1:
+            preds = preds.sigmoid()
             preds[preds >= 0.5] = 1
             preds[preds < 0.5] = 0
             # Get rid of the singleton dimension...
             preds = preds.squeeze().cpu().numpy()
         else:
-            preds = torch.argmax(preds, dim=1).cpu().numpy()
+            preds = preds.softmax(dim=1).argmax(dim=1).cpu().numpy()
 
         # class_labels = {0: 'object', 1: 'blank', 2: 'edge'}
 
@@ -102,8 +103,8 @@ class ContrailCallback(SegmentationImageCallback):
     It subclasses the SegmentationImageCallback, because the plotting method is exactly the same.
     The only difference is how it reads the images and masks, which is adjusted in __init__
     """
-    def __init__(self, image_dir: str, sample_list: list, wandb_enabled: bool = True):
-        super().__init__(num_samples=len(sample_list), num_classes=2, class_labels={0: 'sky', 1: 'contrail'},
+    def __init__(self, image_dir: str, sample_list: list, wandb_enabled: bool = True, num_classes=2):
+        super().__init__(num_samples=len(sample_list), num_classes=num_classes, class_labels={0: 'sky', 1: 'contrail'},
                          wandb_enabled=wandb_enabled)
         self.sample_list = sample_list
         # Create a FalseColorImageDataset from the given sample_list
