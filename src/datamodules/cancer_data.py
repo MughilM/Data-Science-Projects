@@ -20,7 +20,7 @@ import pytorch_lightning as pl
 from torch.utils.data import DataLoader, Dataset
 import torchvision.transforms as T
 
-log = logging.getLogger('train.lit_module')
+log = logging.getLogger('train.lit_datamodule')
 
 class CancerDataset(Dataset):
     def __init__(self, data_folder, file_id_df=None, transform=T.Compose([T.CenterCrop(32), T.ToTensor()]),
