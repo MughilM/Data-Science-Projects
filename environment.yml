@@ -3,12 +3,13 @@ channels:
   - pytorch
   - plotly
   - nvidia
+  - conda-forge
   - defaults
 dependencies:
   - blas=1.0
   - brotli-python=1.0.9
   - bzip2=1.0.8
-  - ca-certificates=2023.12.12
+  - ca-certificates=2024.2.2
   - certifi=2024.2.2
   - cffi=1.16.0
   - charset-normalizer=2.0.4
@@ -33,8 +34,11 @@ dependencies:
   - idna=3.4
   - intel-openmp=2023.1.0
   - jinja2=3.1.2
+  - joblib=1.3.2
   - jpeg=9e
   - lerc=3.0
+  - libblas=3.9.0
+  - libcblas=3.9.0
   - libcublas=12.1.0.26
   - libcublas-dev=12.1.0.26
   - libcufft=11.0.2.4
@@ -48,6 +52,7 @@ dependencies:
   - libdeflate=1.17
   - libffi=3.4.4
   - libjpeg-turbo=2.0.0
+  - liblapack=3.9.0
   - libnpp=12.0.2.50
   - libnpp-dev=12.0.2.50
   - libnvjitlink=12.1.105
@@ -60,6 +65,11 @@ dependencies:
   - libwebp=1.3.2
   - libwebp-base=1.3.2
   - lz4-c=1.9.4
+  - m2w64-gcc-libgfortran=5.3.0
+  - m2w64-gcc-libs=5.3.0
+  - m2w64-gcc-libs-core=5.3.0
+  - m2w64-gmp=6.1.0
+  - m2w64-libwinpthread-git=5.0.0.4634.697f757
   - markupsafe=2.1.1
   - mkl=2023.1.0
   - mkl-service=2.4.0
@@ -69,11 +79,13 @@ dependencies:
   - mpfr=4.0.2
   - mpir=3.0.0
   - mpmath=1.3.0
+  - msys2-conda-epoch=20160418
   - networkx=3.1
   - numpy=1.26.2
   - numpy-base=1.26.2
   - openjpeg=2.4.0
-  - openssl=3.0.13
+  - openssl=3.2.1
+  - pandas=2.2.0
   - pillow=10.0.1
   - pip=23.3.1
   - plotly=5.18.0
@@ -81,22 +93,32 @@ dependencies:
   - pyopenssl=23.2.0
   - pysocks=1.7.1
   - python=3.11.5
+  - python-dateutil=2.8.2
+  - python-tzdata=2023.4
+  - python_abi=3.11
   - pytorch=2.2.0
   - pytorch-cuda=12.1
   - pytorch-mutex=1.0
+  - pytz=2024.1
   - pyyaml=6.0.1
   - requests=2.31.0
+  - scikit-learn=1.4.0
+  - scipy=1.12.0
   - setuptools=68.0.0
+  - six=1.16.0
   - sqlite=3.41.2
   - sympy=1.12
   - tbb=2021.8.0
   - tenacity=8.2.2
+  - threadpoolctl=3.2.0
   - tk=8.6.12
   - typing_extensions=4.7.1
   - tzdata=2023c
+  - ucrt=10.0.22621.0
   - urllib3=1.26.18
   - vc=14.2
-  - vs2015_runtime=14.27.29016
+  - vc14_runtime=14.38.33130
+  - vs2015_runtime=14.38.33130
   - wheel=0.41.2
   - win_inet_pton=1.1.0
   - xz=5.4.2
@@ -171,7 +193,6 @@ dependencies:
       - pure-eval==0.2.2
       - pygments==2.17.2
       - pyrootutils==1.0.4
-      - python-dateutil==2.8.2
       - python-dotenv==1.0.0
       - python-json-logger==2.0.7
       - python-slugify==8.0.1
@@ -184,7 +205,6 @@ dependencies:
       - rfc3986-validator==0.1.1
       - rpds-py==0.17.1
       - send2trash==1.8.2
-      - six==1.16.0
       - sniffio==1.3.0
       - soupsieve==2.5
       - stack-data==0.6.3
