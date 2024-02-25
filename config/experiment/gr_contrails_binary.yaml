@@ -1,0 +1,17 @@
+# @package _global_
+defaults:
+  - override /callbacks:
+      - model_checkpoint
+      - rich_progress_bar
+      - contrail_callback
+  - override /datamodule: gr_contrails_binary
+  - override /model: gr_contrails_binary_resnet
+  - _self_
+
+wandb_enabled: True
+callbacks:
+  contrail_callback:
+    num_classes: 1
+    unclassed_outputs: false
+  model_checkpoint:
+    monitor: "val/s_dice"

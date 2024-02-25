@@ -12,6 +12,7 @@ import logging
 
 import torch
 from torchmetrics import ConfusionMatrix, Accuracy
+from torchmetrics.functional import dice
 from torch.utils.data import Dataset
 import numpy as np
 from PIL import Image
@@ -29,12 +30,14 @@ log = logging.getLogger('train.callback')
 
 class SegmentationImageCallback(Callback):
     def __init__(self, num_samples: int = 10, num_classes=3,
-                 class_labels: DictConfig = None, wandb_enabled: bool = True):
+                 class_labels: DictConfig = None, wandb_enabled: bool = True,
+                 unclassed_outputs: bool = True):
         super().__init__()
         self.num_samples = num_samples
         self.num_classes = num_classes
         self.class_labels = class_labels
         self.wandb_enabled = wandb_enabled
+        self.unclassed_outputs = unclassed_outputs
 
         self.val_images: Optional[torch.Tensor] = None
         self.val_masks: Optional[torch.Tensor] = None
@@ -51,19 +54,24 @@ class SegmentationImageCallback(Callback):
         # Get the prediction
         self.val_images = self.val_images.to(pl_module.device)
         preds = pl_module(self.val_images)
-        if self.num_classes == 1:
-            preds = preds.sigmoid()
-            preds[preds >= 0.5] = 1
-            preds[preds < 0.5] = 0
-            # Get rid of the singleton dimension...
-            preds = preds.squeeze().cpu().numpy()
-        else:
-            preds = preds.softmax(dim=1).argmax(dim=1).cpu().numpy()
+        # If our predictions are unclassed (meaning they don't have sigmoid
+        # nor softmax applied to them), then do it. Otherwise, leave them alone.
+        if self.unclassed_outputs:
+            if self.num_classes == 1:
+                preds = preds.sigmoid()
+                preds[preds >= 0.5] = 1
+                preds[preds < 0.5] = 0
+                # Get rid of the singleton dimension...
+                preds = preds.squeeze().cpu().numpy()
+            else:
+                preds = preds.softmax(dim=1).argmax(dim=1).cpu().numpy()
 
         # class_labels = {0: 'object', 1: 'blank', 2: 'edge'}
 
         images = self.val_images.cpu().numpy()
         masks = self.val_masks.squeeze().cpu().numpy()
+
+        print('Dice coefficient on miniset:', dice(torch.from_numpy(preds), torch.from_numpy(masks).to(torch.int)))
 
         if self.wandb_enabled:
             trainer.logger.experiment.log({
@@ -103,9 +111,10 @@ class ContrailCallback(SegmentationImageCallback):
     It subclasses the SegmentationImageCallback, because the plotting method is exactly the same.
     The only difference is how it reads the images and masks, which is adjusted in __init__
     """
-    def __init__(self, image_dir: str, sample_list: list, wandb_enabled: bool = True, num_classes=2):
+    def __init__(self, image_dir: str, sample_list: list, wandb_enabled: bool = True, num_classes=2,
+                 unclassed_outputs: bool = True):
         super().__init__(num_samples=len(sample_list), num_classes=num_classes, class_labels={0: 'sky', 1: 'contrail'},
-                         wandb_enabled=wandb_enabled)
+                         wandb_enabled=wandb_enabled, unclassed_outputs=unclassed_outputs)
         self.sample_list = sample_list
         # Create a FalseColorImageDataset from the given sample_list
         dataset = GRContrailsFalseColorDataset(image_dir, sample_list, test=False)

@@ -136,8 +136,8 @@ class GRContrailBinaryClassifier(pl.LightningModule):
         self.val_s_acc = MeanMetric()
 
         # Create additional variables for the dice coefficients.
-        self.train_dice = Dice()
-        self.val_dice = Dice()
+        self.train_dice = Dice(ignore_index=0)
+        self.val_dice = Dice(ignore_index=0)
 
     def forward(self, x):
         """

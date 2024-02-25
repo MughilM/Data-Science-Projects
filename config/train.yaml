@@ -12,6 +12,6 @@ task_name: train
 
 checkpoint_reference: null
 
-seed: 1729
+seed: 8128
 
 wandb_enabled: false
