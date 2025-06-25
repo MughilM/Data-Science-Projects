@@ -53,6 +53,7 @@ def train(cfg: DictConfig):
 
     log.info('Starting training...')
     trainer.fit(model=model, datamodule=datamodule, ckpt_path=cfg.get('ckpt_path'))
+    log.info('Training complete.')
 
 
 @hydra.main(version_base='1.3', config_path='../config', config_name='train.yaml')

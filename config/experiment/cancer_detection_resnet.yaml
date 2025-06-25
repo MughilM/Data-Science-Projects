@@ -7,7 +7,7 @@ defaults:
   - override /datamodule: cancer
   - override /model: cancer_resnet
 
-wandb_enabled: True
+wandb_enabled: false
 
 override callbacks.plot_mc_confusion_matrix.labels:
   - "zero"

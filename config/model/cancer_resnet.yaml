@@ -1,4 +1,4 @@
-_target_: src.models.cancer_model.CancerImageClassifier
+_target_: src.models.CancerImageClassifier
 
 optimizer:
   _target_: torch.optim.Adam
@@ -7,7 +7,7 @@ optimizer:
   weight_decay: 0.0
 
 net:
-  _target_: src.models.nets.resnet.ResNet
+  _target_: src.nets.ResNet
   name: resnet50
   output_size: 1
 

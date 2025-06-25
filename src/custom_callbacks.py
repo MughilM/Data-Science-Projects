@@ -12,7 +12,7 @@ import logging
 
 import torch
 from torchmetrics import ConfusionMatrix, Accuracy
-from torchmetrics.functional import dice
+from torchmetrics.functional.segmentation import dice
 from torch.utils.data import Dataset
 import numpy as np
 from PIL import Image
@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 
 from omegaconf import DictConfig, OmegaConf
-from src.datamodules.gr_contrails_data import GRContrailsFalseColorDataset
+from src.datamodules import GRContrailsFalseColorDataset
 
 log = logging.getLogger('train.callback')
 
