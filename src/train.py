@@ -21,7 +21,7 @@ from pytorch_lightning.callbacks import Callback, RichProgressBar
 from utils.instantiators import instantiate_callbacks
 
 
-torch.set_float32_matmul_precision('medium')
+torch.backends.fp32_version = 'ieee'
 os.environ['HYDRA_FULL_ERROR'] = '1'
 
 
