@@ -22,9 +22,11 @@ from sklearn.model_selection import train_test_split
 import pandas as pd
 from PIL import Image
 
+from torch.utils.data import random_split, Dataset, DataLoader
 import pytorch_lightning as pl
 from pytorch_lightning.utilities.types import TRAIN_DATALOADERS, EVAL_DATALOADERS
 import torchvision.transforms as T
+from torchvision.datasets import OxfordIIITPet
 
 from src.datasets import *
 from src.utils.general_funcs import *
@@ -34,7 +36,7 @@ logger = logging.getLogger('train.lit_datamodule')
 # Base class to remove some redundancies
 class BaseDataModule(pl.LightningDataModule):
     def __init__(self, comp_name: str, data_dir: str, downsample_n: int, validation_split: float,
-                 batch_size: int, num_workers: int, pin_memory: bool, image_size: int):
+                 batch_size: int, num_workers: int, pin_memory: bool):
         super().__init__()
         # Saving the hyperparameters allows all the parameters to be accessible with self.hparams
         self.save_hyperparameters()
@@ -60,7 +62,7 @@ class CancerDataModule(BaseDataModule):
                  batch_size: int = 2048, num_workers: int = 1, pin_memory: bool = True,
                  image_size: int = 32):
         super().__init__(comp_name, data_dir, downsample_n, validation_split, batch_size, num_workers,
-                         pin_memory, image_size)
+                         pin_memory)
         # Saving the hyperparameters allows all the parameters to be accessible with self.hparams
         self.save_hyperparameters()
         self.COMP_DATA_PATH = os.path.join(self.hparams.data_dir, self.hparams.comp_name)
@@ -128,10 +130,11 @@ class CancerDataModule(BaseDataModule):
 # TODO: Allow for different kinds of backend Dataset objects (false color, using all bands, etc.)
 class GRContrailDataModule(BaseDataModule):
     def __init__(self, comp_name: str = 'google-research-identify-contrails-reduce-global-warming',
-                 data_dir: str = 'data/', frac: float = 1.0, batch_size: int = 128, num_workers: int = 4,
-                 pin_memory: bool = True, use_val_as_train: bool = True, validation_split: float = 0.2,
-                 train_url: str = None, val_url: str = None, test_url: str = None, binary: bool = False):
-        super().__init__(comp_name, data_dir)
+                 data_dir: str = 'data/', downsample_n: int = 10000, frac: float = 1.0, batch_size: int = 128,
+                 num_workers: int = 4, pin_memory: bool = True, use_val_as_train: bool = True,
+                 validation_split: float = 0.2, train_url: str = None, val_url: str = None, test_url: str = None,
+                 binary: bool = False):
+        super().__init__(comp_name, data_dir, downsample_n, validation_split, batch_size, num_workers, pin_memory)
         if (frac > 1) or (frac <= 0):
             logger.error(f'Invalid value for fraction ({frac})!')
             sys.exit(1)
@@ -218,4 +221,52 @@ class GRContrailDataModule(BaseDataModule):
             # Create the test Dataset, doesn't matter about training and validation splits or whatever
             test_datapath = os.path.join(self.COMP_DATA_PATH, 'test')
             self.test_dataset = GRContrailsFalseColorDataset(test_datapath, binary=self.hparams.binary)
+
+
+class OxfordDataModule(BaseDataModule):
+    def __init__(self, data_dir, comp_name: str = 'oxford', image_size: int = 128, batch_size: int = 1024,
+                 downsample_n: int = 1000, validation_split: float = 0.2,
+                 num_workers: int = 2, pin_memory: bool = True):
+        super().__init__()
+        self.save_hyperparameters()
+
+        # Define the image and mask transforms
+        self.image_transform = T.Compose([
+            T.Resize((self.hparams.image_size, self.hparams.image_size)),
+            T.ToTensor()
+        ])
+        self.mask_transform = T.Compose([
+            T.Resize((self.hparams.image_size, self.hparams.image_size)),
+            T.PILToTensor(),
+            T.Lambda(self._decrement_mask_squeeze)
+        ])
+
+        self.train_dataset: Dataset = None
+        self.val_dataset: Dataset = None
+        self.test_dataset: Dataset = None
+
+    def _decrement_mask_squeeze(self, x):
+        return (x - 1).squeeze()
+
+    def prepare_data(self) -> None:
+        # Just download the OxFord III Pet Dataset
+        OxfordIIITPet(root=self.hparams.data_dir, target_types='segmentation', download=True,
+                      transform=self.image_transform, target_transform=self.mask_transform)
+        OxfordIIITPet(root=self.hparams.data_dir, target_types='segmentation', download=True, split='test',
+                      transform=self.image_transform, target_transform=self.mask_transform)
+
+    def setup(self, stage: str) -> None:
+        # Assign training and validation based on stage.
+        if stage == 'fit' or stage is None:
+            oxford_full = OxfordIIITPet(root=self.hparams.data_dir, target_types='segmentation', download=True,
+                                        transform=self.image_transform, target_transform=self.mask_transform)
+            # Cut down some more if downsample is positive
+            if self.hparams.downsample_n != -1:
+                oxford_full, _ = random_split(oxford_full, lengths=[self.hparams.downsample_n,
+                                                                    len(oxford_full) - self.hparams.downsample_n])
+            self.train_dataset, self.val_dataset = random_split(oxford_full, lengths=[0.8, 0.2])
+        if stage == 'test' or stage is None:
+            self.test_dataset = OxfordIIITPet(root=self.hparams.data_dir, target_types='segmentation',
+                                              download=True, split='test',
+                                              transform=self.image_transform, target_transform=self.mask_transform)
 

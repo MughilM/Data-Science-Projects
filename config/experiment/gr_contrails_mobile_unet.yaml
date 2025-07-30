@@ -11,4 +11,4 @@ defaults:
 wandb_enabled: True
 callbacks:
   contrail_callback:
-    num_classes: 1
+    num_classes: 2

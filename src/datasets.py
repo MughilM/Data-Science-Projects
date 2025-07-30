@@ -98,7 +98,8 @@ class GRContrailsFalseColorDataset(Dataset):
             mask = np.load(os.path.join(self.image_dir, dir_id, 'human_pixel_masks.npy'))
             # Mask is 256 x 256 x 1, do a transpose so both input image and mask are the same shape.
             # Also convert to float, since it will be compared with binary cross entropy.
-            mask = torch.from_numpy(np.transpose(mask, (2, 0, 1))).to(float)
+            # Explicitly set it to float32, in case we are running using MPS (Apple Silicon)
+            mask = torch.from_numpy(np.transpose(mask, (2, 0, 1))).to(torch.float32)
             # Include binary labels if we need to.
             if self.binary:
                 return image, int(torch.any(mask)), mask

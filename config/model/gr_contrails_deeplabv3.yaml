@@ -1,4 +1,4 @@
-_target_: src.models.gr_contrails_model.GRContrailsDeepLabResNet50
+_target_: src.models.GRContrailsDeepLabResNet50
 
 optimizer:
   _target_: torch.optim.SGD

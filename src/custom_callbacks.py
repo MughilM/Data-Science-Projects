@@ -71,7 +71,15 @@ class SegmentationImageCallback(Callback):
         images = self.val_images.cpu().numpy()
         masks = self.val_masks.squeeze().cpu().numpy()
 
-        print('Dice coefficient on miniset:', dice(torch.from_numpy(preds), torch.from_numpy(masks).to(torch.int)))
+        # print(np.unique(preds))
+        # print(np.unique(masks))
+        #
+        # print('Dice coefficient on miniset:', dice.dice_score(
+        #     torch.from_numpy(preds).to(torch.long),
+        #     torch.from_numpy(masks).to(torch.long),
+        #     num_classes=self.num_classes,
+        #     input_format='index'
+        # ))
 
         if self.wandb_enabled:
             trainer.logger.experiment.log({
@@ -117,16 +125,19 @@ class ContrailCallback(SegmentationImageCallback):
                          wandb_enabled=wandb_enabled, unclassed_outputs=unclassed_outputs)
         self.sample_list = sample_list
         # Create a FalseColorImageDataset from the given sample_list
-        dataset = GRContrailsFalseColorDataset(image_dir, sample_list, test=False)
-        # Gather the images and its mask labels
-        self.val_images = torch.stack([dataset[i][0] for i in range(len(dataset))], dim=0)
-        self.val_masks = torch.stack([dataset[i][1] for i in range(len(dataset))], dim=0)
+        self.dataset = GRContrailsFalseColorDataset(image_dir, sample_list, test=False)
+        # There is an edge case where we call this BEFORE the data has been downloaded.
+        # Due to this, we don't access the actual data until the validation epoch starts in the loop below.
+        self.val_images: Optional[torch.Tensor] = None
+        self.val_masks: Optional[torch.Tensor] = None
 
     def on_validation_epoch_start(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
         # An override, because by default, the SegmentationCallback extracts samples from a single
         # batch, but we've already generated the list of images and masks to use.
-        # So we do nothing here.
-        pass
+        # We set the Tensor object here because sometimes we create this class from before the
+        # data has been downloaded.
+        self.val_images = torch.stack([self.dataset[i][0] for i in range(len(self.dataset))], dim=0)
+        self.val_masks = torch.stack([self.dataset[i][1] for i in range(len(self.dataset))], dim=0)
 
     def on_test_epoch_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
         """
