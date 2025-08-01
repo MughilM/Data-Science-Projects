@@ -270,3 +270,62 @@ class OxfordDataModule(BaseDataModule):
                                               download=True, split='test',
                                               transform=self.image_transform, target_transform=self.mask_transform)
 
+class TGSSaltDataModule(BaseDataModule):
+    def __init__(self, comp_name: str = 'tgs-salt-identification-challenge', data_dir: str = 'data/',
+                 downsample_n: int = 1000, validation_split: float = 0.2,
+                 batch_size: int = 1024, num_workers: int = 4, pin_memory: bool = True):
+        super().__init__(comp_name, data_dir, downsample_n, validation_split, batch_size, num_workers, pin_memory)
+        self.COMP_DATA_PATH = os.path.join(self.hparams.data_dir, self.hparams.comp_name)
+
+    @property
+    def num_classes(self):
+        return 1
+
+    def prepare_data(self) -> None:
+        """
+        Download TGS Salt from Kaggle. No assignments here.
+        :return:
+        """
+        if not os.path.exists(self.COMP_DATA_PATH):
+            logger.info(f'Downloading {self.hparams.comp_name} competition files...')
+            kaggle.api.competition_download_files(self.hparams.comp_name, path=self.hparams.data_dir, quiet=False)
+            logger.info(f'Extracting contents into {self.COMP_DATA_PATH}...')
+            with zipfile.ZipFile(os.path.join(self.hparams.data_dir, f'{self.hparams.comp_name}.zip'), 'r') as zip_ref:
+                zip_ref.extractall(self.COMP_DATA_PATH)
+            os.remove(os.path.join(self.hparams.data_dir, f'{self.hparams.comp_name}.zip'))
+            logger.info('Extracting sub zip files...')
+            files = ['competition_data', 'flamingo', 'test', 'train']
+            for file in files:
+                with zipfile.ZipFile(os.path.join(self.COMP_DATA_PATH, f'{file}.zip'), 'r') as zip_ref:
+                    zip_ref.extractall(self.COMP_DATA_PATH)
+                    # Delete zip file
+                os.remove(os.path.join(self.COMP_DATA_PATH, f'{file}.zip'))
+
+    def setup(self, stage: str) -> None:
+        """
+        Load the training, validation, and testing Datasets. We will be using
+        the competition-data subfolder...
+        :param stage:
+        :return:
+        """
+        if not self.train_dataset and not self.vali_dataset and not self.test_dataset:
+            # Read the list of training files available
+            train_datapath = os.path.join(self.COMP_DATA_PATH, 'competition_data', 'train')
+            test_datapath = os.path.join(self.COMP_DATA_PATH, 'competition_data', 'test')
+            all_files = glob.glob(os.path.join(train_datapath, 'images', '*.png'))
+            test_files = glob.glob(os.path.join(test_datapath, 'images', '*.png'))
+            # Convert all to basenames...
+            all_files = [os.path.basename(f) for f in all_files]
+            test_files = [os.path.basename(f) for f in test_files]
+            # Downsample, if applicable
+            if self.hparams.downsample_n != -1:
+                all_files = np.random.choice(all_files, size=self.hparams.downsample_n, replace=False)
+            # Split training and validation
+            train_files, vali_files = train_test_split(all_files, test_size=self.hparams.validation_split)
+            logger.info(f'Number of training images: {len(train_files)}')
+            logger.info(f'Number of validation images: {len(vali_files)}')
+            # Load the dataset objects, only transforming the training images...
+            self.train_dataset = TGSSaltDataset(data_dir=train_datapath, file_ids=train_files, train=True)
+            self.vali_dataset = TGSSaltDataset(data_dir=train_datapath, file_ids=vali_files, train=False)
+            self.test_dataset = TGSSaltDataset(data_dir=test_datapath, file_ids=test_files, train=False)
+

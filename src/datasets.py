@@ -108,3 +108,56 @@ class GRContrailsFalseColorDataset(Dataset):
         # Test samples don't include ground truth, so just return the image.
         else:
             return image
+
+class TGSSaltDataset(Dataset):
+    def __init__(self, data_dir, hflip=True, vflip=True, train=True, file_ids=None):
+        self.data_dir = data_dir
+        self.image_dir = os.path.join(self.data_dir, 'images')
+        self.mask_dir = os.path.join(self.data_dir, 'masks')
+        self.hflip = hflip
+        self.vflip = vflip
+        self.train = train
+
+        # Get the list of file IDs
+        self.file_ids = file_ids
+
+
+    def transform(self, image, mask):
+        # We need to transform the image and mask in the same way
+        # e.g. give it the same horizontal flip at random probability...
+        if self.hflip and torch.rand(1)[0].item() > 0.5:
+            image = TF.hflip(image)
+            mask = TF.hflip(mask)
+        if self.vflip and torch.rand(1)[0].item() > 0.5:
+            image = TF.vflip(image)
+            mask = TF.vflip(mask)
+
+        # Convert to tensors, and convert mask to integer
+        image = TF.to_tensor(image)
+        mask = TF.convert_image_dtype(TF.to_tensor(mask), dtype=torch.uint8)
+        # Make the mask have values 0 or 1
+        mask[mask == 255] = 1
+        return image, mask
+
+    def __len__(self):
+        return len(self.file_ids)
+
+    def __getitem__(self, idx):
+        # Read the image and its mask at the corresponding index.
+        file_id = self.file_ids[idx]
+        image_path = os.path.join(self.image_dir, file_id)
+        mask_path = os.path.join(self.mask_dir, file_id)
+        image = Image.open(image_path).convert('L')
+        mask = Image.open(mask_path).convert('L')
+        # To ensure the same random transformation is applied to both the image
+        # and the mask, we create a dictionary and call the transform on it as a whole.
+        # Only transform if we are dealing with the training dataset
+        if self.train:
+            image, mask = self.transform(image, mask)
+        # Otherwise, only convert to tensor and the target dtype
+        else:
+            image = TF.to_tensor(image)
+            mask = TF.convert_image_dtype(TF.to_tensor(mask), dtype=torch.uint8)
+            # We have 0 and 255 here, clip values to 0 and 1
+            mask.clip_(0, 1)
+        return image, mask
