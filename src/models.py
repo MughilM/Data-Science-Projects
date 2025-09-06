@@ -358,7 +358,7 @@ class GRContrailsDeepLabResNet50(pl.LightningModule):
         # With DeepLabV3, the output is 2 x 256 x 256, so we have to call argmax before passing through BinaryAccuracy
         accuracy = self.accuracy(output_masks, masks)
         loss = self.loss(output_masks, masks.to(int))
-        dice = self.train_dice(output_masks, masks.to(torch.long))
+        dice = self.train_dice(output_masks.softmax(dim=1).argmax(dim=1), masks.to(torch.long))
         # Update accuracy and loss.
         self.train_acc(accuracy)
         self.train_loss(loss)
@@ -375,7 +375,7 @@ class GRContrailsDeepLabResNet50(pl.LightningModule):
         # Calculate training accuracy, training loss, and training dice. Only log the dice since that's important.
         accuracy = self.accuracy(output_masks, masks)
         loss = self.loss(output_masks, masks.to(int))
-        dice = self.val_dice(output_masks, masks.to(torch.long))
+        dice = self.val_dice(output_masks.softmax(dim=1).argmax(dim=1), masks.to(torch.long))
         # Update accuracy and loss.
         self.val_acc(accuracy)
         self.val_loss(loss)
